@@ -55,7 +55,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route element={<ProtectedRoute role="student" />}>
-            <Route path="/hackathons" element={<Hackathons role="student"/>}/>
+            <Route path="/workspace/hackathons" element={<Hackathons />} />
+            <Route path="/hackathons" element={<Navigate to="/workspace/hackathons" replace />} />
             <Route path="/live-classes" element={<LiveClasses role="student"/>}/>
             <Route path="/live-classes/:id" element={<LiveClassDetails role="student"/>}/>
             <Route path="/dashboard/student" element={<StudentDashboard />} />
@@ -86,7 +87,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           </Route>
           {(["trainer", "admin"] as const).map((role) => (
             <Route key={role} element={<ProtectedRoute role={role} />}>
-              <Route path={`/manage/${role}/hackathons`} element={<Hackathons role={role}/>}/>
               <Route path={`/manage/${role}/live-classes`} element={<LiveClasses role={role}/>}/>
               <Route path={`/manage/${role}/live-classes/:id`} element={<LiveClassDetails role={role}/>}/>
               <Route

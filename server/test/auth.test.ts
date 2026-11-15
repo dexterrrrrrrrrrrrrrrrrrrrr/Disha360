@@ -39,13 +39,19 @@ beforeEach(async () => {
 afterAll(async () => { await mongoose.disconnect(); if (mongo) await mongo.stop(); });
 
 describe('persistent authentication', () => {
-  it('exposes synchronized hackathon listings only to signed-in accounts', async () => {
+  it('exposes synchronized hackathon listings only to signed-in students', async () => {
     const feed = vi.fn().mockResolvedValue({ syncedAt: '2026-11-15T00:00:00.000Z', stale: false, events: [] });
     const appWithFeed = createApp({ clientOrigin: origin, databaseConfigured: true, hackathonFeed: feed });
     expect((await request(appWithFeed).get('/api/v1/hackathons')).status).toBe(401);
+    for (const role of ['trainer', 'admin'] as const) {
+      const staff = await account(role);
+      const signIn = await mutation(request(appWithFeed), 'login', { email: staff.email, password });
+      expect(signIn.status).toBe(200);
+      expect((await request(appWithFeed).get('/api/v1/hackathons').set('Cookie', cookie(signIn))).status).toBe(403);
+    }
     expect(feed).not.toHaveBeenCalled();
-    const trainer = await account('trainer');
-    const signIn = await mutation(request(appWithFeed), 'login', { email: trainer.email, password });
+    const learner = await account('student');
+    const signIn = await mutation(request(appWithFeed), 'login', { email: learner.email, password });
     const response = await request(appWithFeed).get('/api/v1/hackathons').set('Cookie', cookie(signIn));
     expect(response.status).toBe(200);
     expect(response.headers['cache-control']).toBe('no-store');

@@ -24,9 +24,10 @@ non-sensitive question. Do not certify AI from the configuration status alone.
 
 ## Hackathons
 
-The signed-in Hackathons page for students, trainers, and admins reads the
-[Hack Club Hackathons API](https://hackathons.hackclub.com/data/), which focuses on
-student-led events. The page shows active and upcoming events in the viewer's
+Signed-in students can open **Workspace → Hackathons** at
+`/workspace/hackathons`. The page and its API are restricted to students. Listings
+come from the [Hack Club Hackathons API](https://hackathons.hackclub.com/data/),
+which focuses on student-led events. The page shows active and upcoming events in the viewer's
 time zone, links to organizer websites, and shows the last successful sync.
 A visit refreshes a cache older than one hour. If the public feed fails, the
 last successful in-memory snapshot can be shown for up to 24 hours. This
