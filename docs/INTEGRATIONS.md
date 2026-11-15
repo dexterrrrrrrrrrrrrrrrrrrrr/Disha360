@@ -11,11 +11,15 @@ from the key. The [model list and limits](https://console.groq.com/docs/rate-lim
 may change.
 
 The backend uses one credential and model for interview questions and feedback,
-resume suggestions, and coding mentorship. It never silently falls back or
+resume suggestions, coding mentorship, and optional assessment study plans. It never silently falls back or
 retries. The default allowance is 25 attempts per rolling day per running
 instance, with three per minute and one at a time. `GROQ_DAILY_REQUEST_LIMIT`
 can lower the allowance. These are app limits and reset on restart; Groq
 enforces the actual account quota. AI advice does not execute or grade code.
+Students can request a study plan under **Workspace → Performance analytics**
+after finishing an assessment. Only aggregate counts and accuracy by category
+are sent after consent; there are no questions, answers, identifiers, or peer
+data in that request. AI feedback never changes a grade.
 
 With the same backend configuration injected securely, run
 `npm run groq:check -w server` to check model access without generating text.

@@ -51,7 +51,7 @@ import {
   saveProgress,
   submitAttempt,
 } from "../controllers/assessments.js";
-import { studentAnalytics } from "../controllers/analytics.js";
+import { analyticsControllers } from "../controllers/analytics.js";
 
 export function studentRoutes(
   clientOrigin: string,
@@ -115,12 +115,12 @@ export function studentRoutes(
       success: false,
       error: {
         code: "RATE_LIMITED",
-        message: "Too many interview requests. Wait a minute before retrying.",
+        message: "Too many AI requests. Wait a minute before retrying.",
       },
     },
   });
   router.post("/resumes/:id/ai-suggestions", aiLimit, resumeSuggestionController(provider));
-  const mentor = codingMentorControllers(provider);
+  const mentor = codingMentorControllers(provider, aiSetupMessage);
   const mentorLimit = rateLimit({ windowMs: 60000, limit: 5, keyGenerator: req => req.user!.id as string,
     message: { success: false, error: { code: 'RATE_LIMITED', message: 'Too many mentor requests. Please wait a minute.' } } });
   router.get('/coding/mentor/config', mentor.config);
@@ -142,7 +142,9 @@ export function studentRoutes(
   router.get("/attempts/:id", getAttempt);
   router.put("/attempts/:id/progress", saveProgress);
   router.post("/attempts/:id/submit", submitAttempt);
-  router.get("/analytics", studentAnalytics);
+  const analytics = analyticsControllers(provider);
+  router.get("/analytics", analytics.overview);
+  router.post("/analytics/coach", aiLimit, analytics.coach);
   router.get("/engagement", ownEngagement);
   router.get("/leaderboard", leaderboard);
   router.get("/leaderboard/options", leaderboardOptions);

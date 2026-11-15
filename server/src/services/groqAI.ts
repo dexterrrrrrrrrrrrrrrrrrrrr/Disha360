@@ -2,6 +2,7 @@ import type { z } from 'zod';
 import { AppError } from '../utils/AppError.js';
 import { StructuredAI } from './structuredAI.js';
 import { limitedText } from './limitedResponse.js';
+import { assessmentCoachInput, assessmentPlan, assessmentPlanJson, type AssessmentCoachInput } from '../validators/assessmentCoach.js';
 
 const endpoint = 'https://api.groq.com/openai/v1/chat/completions';
 export const groqModel = 'openai/gpt-oss-20b';
@@ -13,6 +14,12 @@ export class GroqAI extends StructuredAI {
   constructor(private readonly key: string, private readonly model: string,
     private readonly dailyLimit: number, private readonly send: typeof fetch = fetch) {
     super();
+  }
+  async assessmentCoach(input: AssessmentCoachInput) {
+    return this.json(
+      'Use these aggregate results to suggest a short study plan. Give a brief summary and one to three specific practice steps. Acknowledge limited evidence for small samples. Do not invent topics, diagnose abilities, calculate a new grade, or claim that any score changed.',
+      assessmentCoachInput.parse(input), assessmentPlanJson, assessmentPlan, 650,
+    );
   }
   protected async json<T>(instructions: string, input: unknown, schema: unknown,
     validate: z.ZodType<T>, maxOutputTokens: number): Promise<T> {
