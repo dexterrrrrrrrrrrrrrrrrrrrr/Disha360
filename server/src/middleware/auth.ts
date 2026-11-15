@@ -10,8 +10,9 @@ export const requireAuth: RequestHandler = async (req, _res, next) => {
   const token = readToken(req);
   if (!token) throw new AppError(401, 'UNAUTHENTICATED', 'Please sign in to continue.');
   const session = await Session.findOne({ tokenHash: tokenHash(token), expiresAt: { $gt: new Date() } });
-  const user = session ? await User.findById(session.userId).select('+isDemo') : null;
-  if (!user || (user.isDemo && !req.app.locals.allowDemoAccounts)) throw new AppError(401, 'UNAUTHENTICATED', 'Your session has expired. Please sign in again.');
+  const user = session ? await User.findById(session.userId).select('+isDemo +authVersion') : null;
+  if (!user || (session?.authVersion ?? 0) !== (user.authVersion ?? 0) ||
+    (user.isDemo && !req.app.locals.allowDemoAccounts)) throw new AppError(401, 'UNAUTHENTICATED', 'Your session has expired. Please sign in again.');
   req.user = user;
   next();
 };

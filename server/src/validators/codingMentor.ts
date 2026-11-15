@@ -4,9 +4,10 @@ export const mentorActions = ['explain', 'error', 'hint', 'debug', 'optimize', '
 export const mentorRequest = codeInput.omit({ stdin: true }).extend({
   action: z.enum(mentorActions), hintLevel: z.number().int().min(1).max(3).default(1),
   allowSolution: z.boolean().default(false), problemId: z.string().regex(/^[a-f0-9]{24}$/).optional(),
+  consentProvider: z.string().max(80).optional(),
   error: z.string().max(4000).default(''),
 }).strict();
-export const mentorContextSchema = mentorRequest.omit({ problemId: true }).extend({
+export const mentorContextSchema = mentorRequest.omit({ problemId: true, consentProvider: true }).extend({
   problem: z.object({ title: z.string().max(150), statement: z.string().max(10000), inputFormat: z.string().max(2000), outputFormat: z.string().max(2000), constraints: z.string().max(2000) }).strict().nullable(),
 }).strict();
 export type MentorContext = z.infer<typeof mentorContextSchema>;

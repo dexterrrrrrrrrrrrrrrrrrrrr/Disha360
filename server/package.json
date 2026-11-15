@@ -10,8 +10,10 @@
     "start": "node dist/index.js",
     "test": "vitest run",
     "db:check": "tsx src/utils/checkDatabase.ts",
+    "groq:check": "tsx src/utils/checkGroq.ts",
     "seed:demo": "tsx src/utils/seedDemo.ts",
     "user:create": "tsx src/utils/provisionUser.ts",
+    "user:recover": "tsx src/utils/recoverAccount.ts",
     "seed:assessments": "tsx src/utils/seedAssessments.ts",
     "seed:coding": "tsx src/utils/seedCoding.ts",
     "seed:companies": "tsx src/utils/seedCompanies.ts"
