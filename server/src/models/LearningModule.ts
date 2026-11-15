@@ -5,6 +5,7 @@ export const LearningLessonSchema = new Schema({
   kind: { type: String, enum: ["text", "link"], required: true },
   body: { type: String, default: "", maxlength: 10000 },
   url: { type: String, default: "", maxlength: 2000 },
+  pdf: { type: new Schema({ name: String, size: Number }, { _id: false }), default: undefined },
 });
 const schema = new Schema(
   {
@@ -15,6 +16,8 @@ const schema = new Schema(
     description: { type: String, default: "", maxlength: 3000 },
     objectives: { type: [String], default: [] },
     lessons: { type: [LearningLessonSchema], default: [] },
+    // Store bytes in the same document for atomic edits; never select them for listings.
+    pdfFiles: { type: Map, of: Buffer, select: false },
     published: { type: Boolean, default: false },
     version: { type: Number, default: 1 },
   },

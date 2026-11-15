@@ -263,7 +263,15 @@ Coding performance counts only non-System-Error finalized records. Solved/attemp
 
 Students only consume published modules and write their own visit/completion evidence. Trainer authorization is **content ownership**, including progress for participants of that content; there is no implied access to another trainer's module or institution-wide progress. Admin can manage all modules. Full assigned-batch administration is not added. Lessons retain IDs through edits; removed lessons do not count as complete, new lessons add to the denominator, and unpublished modules no longer contribute dashboard evidence. Actual unfinished module records provide resume recommendations. Historical lesson events remain actual events, not fabricated learning outcomes.
 
-**PDF/file uploads remain unavailable.** No private file-storage backend is configured, so no upload endpoint, public upload folder or download-authorization claim exists. Text/link workflows are functional; secure validation, private storage, permissions, scanning and end-to-end download tests are prerequisites for future uploads.
+**Learning PDF attachments** are stored in existing MongoDB documents, separate
+from ordinary lesson responses. An owning trainer or an admin can attach,
+replace, or remove one PDF per saved lesson (2 MiB per PDF, three per module).
+Only authenticated students can download PDFs from published modules. Unpublishing
+revokes student download access; removing a lesson removes its attachment.
+Downloads are delivered as attachments, with no public URLs or cache. The API
+checks the filename, size, and PDF framing; it does not perform malware scanning
+or render PDFs. Staff should upload trusted course documents. The files count
+toward the existing database storage quota.
 
 ### Files, verification and limitations
 
