@@ -2,6 +2,7 @@ import { BadgeAward } from "./models/BadgeAward.js";
 import { BatchAssignment } from "./models/BatchAssignment.js";
 import { Company, CompanyProgress } from "./models/Company.js";
 import { LearningModule } from "./models/LearningModule.js";
+import { publishStarterCoding } from "./services/starterCoding.js";
 import { CodingProblem } from "./models/CodingProblem.js";
 import { CodingSubmission } from "./models/CodingSubmission.js";
 import { configureExecution } from './services/executionProvider.js';
@@ -75,6 +76,14 @@ if (env.MONGODB_URI) {
   console.warn(
     "MONGODB_URI is not configured. Authentication and persistence are unavailable; health endpoints remain available.",
   );
+
+if (databaseStatus() === "connected") {
+  try {
+    await publishStarterCoding();
+  } catch {
+    console.error("Could not publish the coding starter challenges. Existing challenges are unchanged.");
+  }
+}
 
 const ai = configureAI(env);
 const execution = configureExecution(env);

@@ -27,6 +27,7 @@ export interface ExecutionResult {
 }
 export interface ExecutionProvider {
   name: string;
+  supportedLanguages?: readonly CodeInput["language"][];
   availability?(): Promise<{ available: boolean; message: string }>;
   execute(input: CodeInput): Promise<ExecutionResult>;
   executeBatch?(input: Omit<CodeInput, 'stdin'>, stdin: string[]): Promise<ExecutionResult[]>;

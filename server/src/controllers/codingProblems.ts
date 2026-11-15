@@ -130,6 +130,8 @@ export function problemControllers(provider?: ExecutionProvider) {
       ...(!req.app.locals.allowDemoAccounts ? { demo: false } : {}),
     }).select("+hiddenTests");
     if (!p) throw new AppError(404, "NOT_FOUND", "Coding problem not found.");
+    if (provider.supportedLanguages && !provider.supportedLanguages.includes(input.language))
+      throw new AppError(400, "UNSUPPORTED_LANGUAGE", "This runner does not support the selected language.");
     let s;
     if (!p.supportedLanguages.includes(input.language)) throw new AppError(400, 'UNSUPPORTED_LANGUAGE', 'This problem does not support the selected language.');
     try {

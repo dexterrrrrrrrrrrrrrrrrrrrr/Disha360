@@ -60,18 +60,26 @@ existing account only if the exact email and role match a non-demo user. Old
 sessions are invalidated. Convey the new password only through your approved
 private credential channel. Do not bulk-reset or share staff passwords in chat.
 
-## Hosted coding sandbox
+## Coding practice on Render
 
-For a deployment that should use zero execution credits, set
-`CODING_EXECUTION_PROVIDER=disabled` and `ONECOMPILER_ENABLED=false` on the
-existing Render service. This keeps draft editing and GroqCloud Coding Mentor
-available while Run and Submit remain unavailable. Leave the GroqCloud
-environment variables in place; the runner and AI settings are independent.
+Set `CODING_EXECUTION_PROVIDER=javascript` on the existing Render service for
+JavaScript Run and Submit without another service, key, or execution credits.
+Set `ONECOMPILER_ENABLED=false` if it is no longer used. Leave the GroqCloud
+settings alone; Coding Mentor is independent of execution and grading.
+`disabled` still turns off Run and Submit. In production, `auto` uses the
+built-in runner if no credentialed OneCompiler or confirmed Judge0 is configured.
 
-The local Docker runner on `work` is development-only. Do not expose its socket
-or worker to the public internet. A hosted sandbox is a separate release:
-determine that the existing Vercel account is eligible for the
-[Hobby Sandbox allowance](https://vercel.com/docs/sandbox/pricing), require
-network-denied ephemeral isolation, and verify real execution and grading in all
-four supported languages before enabling it. Keep paid OneCompiler and Render
-Sandboxes disabled unless the cost constraint changes.
+The runner uses QuickJS compiled to WebAssembly in a bounded worker. Each test
+gets a fresh guest that receives only its source and standard input. It has no
+host filesystem, network, Node process, or module access. The template's
+`require("fs").readFileSync(0, "utf8")` is a guest-only input shim.
+Use `console.log` for output. Run uses custom input. Submit uses server-side
+hidden tests and saves the judged result. The runner accepts one job at a time.
+
+Startup inserts three published starter challenges if their keys are absent:
+Sum two integers, Reverse a word, and Longest increasing subsequence. It does not
+overwrite or re-publish existing records and does not run development seeds.
+
+Python, Java, and C++ can still be edited and saved. Public execution of those
+languages requires a separately configured isolated provider; the local Docker
+runner remains development-only.

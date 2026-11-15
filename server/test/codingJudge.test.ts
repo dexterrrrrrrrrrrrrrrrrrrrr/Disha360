@@ -8,6 +8,8 @@ import {
 import { createApp } from "../src/app.js";
 import { CodingProblem } from "../src/models/CodingProblem.js";
 import { CodingSubmission } from "../src/models/CodingSubmission.js";
+import { publishStarterCoding } from "../src/services/starterCoding.js";
+import { configureExecution } from "../src/services/executionProvider.js";
 import { seedCoding } from "../src/services/sampleCoding.js";
 import { normalizeOutput } from "../src/services/codingJudge.js";
 import type { ExecutionResult } from "../src/services/codeExecution.js";
@@ -238,4 +240,45 @@ it("uses documented whitespace rules without accepting interior or case differen
   expect(normalizeOutput(" a  b \r\n\n")).toBe(" a  b");
   expect(normalizeOutput("a b")).not.toBe(normalizeOutput("a  b"));
   expect(normalizeOutput("A")).not.toBe(normalizeOutput("a"));
+});
+
+
+it("publishes real starters once and runs and judges JavaScript without provider credentials", async () => {
+  await seedCoding("development");
+  await publishStarterCoding();
+  const retired = await CodingProblem.findOneAndUpdate(
+    { key: "starter-coding-reverse" }, { published: false, title: "Retired by staff" }, { new: true },
+  );
+  await publishStarterCoding();
+  expect(await CodingProblem.countDocuments()).toBe(6);
+  const after = await CodingProblem.findById(retired!._id);
+  expect(after?.published).toBe(false);
+  expect(after?.title).toBe("Retired by staff");
+  expect(after?.updatedAt).toEqual(retired?.updatedAt);
+  const student = await studentAccount();
+  const settings = { NODE_ENV: "production", ONECOMPILER_ENABLED: true, ONECOMPILER_MAX_EXECUTIONS_PER_DAY: 100, JUDGE0_SECURITY_CONFIRMED: false };
+  const { provider } = configureExecution(settings);
+  expect(configureExecution({ ...settings, CODING_EXECUTION_PROVIDER: "disabled" }).provider).toBeUndefined();
+  const app = createApp({ clientOrigin: "http://localhost:5173", databaseConfigured: true, executionProvider: provider });
+  const call = (method: "get" | "post", path: string, body?: object) =>
+    studentCall(app, student.cookie, method, path, body);
+  const config = await call("get", "/coding/config");
+  expect(config.body.data).toMatchObject({ configured: true, supportedLanguages: ["javascript"] });
+  const list = await call("get", "/coding/problems");
+  expect(list.body.data.problems).toHaveLength(2);
+  expect(JSON.stringify(list.body)).not.toMatch(/SAMPLE|hiddenTests|999999/);
+  const problem = list.body.data.problems.find((p: { title: string }) => p.title === "Sum two integers");
+  expect(problem).toBeDefined();
+  const source = String.raw`const [a,b] = require("fs").readFileSync(0,"utf8").trim().split(/\s+/).map(Number); console.log(a+b);`;
+  const run = await call("post", "/coding/run", { language: "javascript", source, stdin: "20 22" });
+  expect(run.body.data.execution).toMatchObject({ verdict: "Accepted", stdout: "42\n" });
+  const path = `/coding/problems/${problem.id}/submissions`;
+  const rejected = await call("post", path, { language: "python", source: "print(42)", requestId: randomUUID() });
+  expect(rejected.status).toBe(400);
+  expect(await CodingSubmission.countDocuments()).toBe(0);
+  const graded = await call("post", path, { language: "javascript", source, requestId: randomUUID() });
+  expect(graded.body.data.submission).toMatchObject({ verdict: "Accepted", score: 100, passed: 3, total: 3 });
+  expect(JSON.stringify(graded.body)).not.toMatch(/hiddenTests|expected|999999|readFileSync/);
+  const wrong = await call("post", path, { language: "javascript", source: "console.log(999)", requestId: randomUUID() });
+  expect(wrong.body.data.submission).toMatchObject({ verdict: "Wrong Answer", score: 0 });
 });
