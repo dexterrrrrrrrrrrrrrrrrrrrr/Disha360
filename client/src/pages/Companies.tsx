@@ -68,7 +68,7 @@ export function Companies() {
         title="Company preparation"
         detail="Build a focused study plan, connect your practice, and keep track of each next step."
       />
-      <Notice text="Sample profiles are illustrative study guides. Recruitment stages and requirements vary by role and year; verify the current official job posting. Checklist progress is self-reported preparation, not an employer readiness score." />
+      <p className="mb-6 text-sm text-slate-600">Use the checklists to track your practice. Check the employer’s job posting for current requirements and hiring steps.</p>
       <div className="mb-6 grid gap-4 sm:grid-cols-[1fr_240px]">
         <label className="relative">
           <span className="field-label">Search companies or topics</span>
