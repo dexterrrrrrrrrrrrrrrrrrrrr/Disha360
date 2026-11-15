@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 import request from 'supertest';
@@ -12,6 +12,7 @@ import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { recoverAccount } from '../src/services/recoverAccount.js';
 
 const origin = 'http://localhost:5173';
 const password = 'TestingPassword123!';
@@ -38,6 +39,40 @@ beforeEach(async () => {
 afterAll(async () => { await mongoose.disconnect(); if (mongo) await mongo.stop(); });
 
 describe('persistent authentication', () => {
+  it('exposes synchronized hackathon listings only to signed-in students', async () => {
+    const feed = vi.fn().mockResolvedValue({ syncedAt: '2026-11-15T00:00:00.000Z', stale: false, events: [] });
+    const appWithFeed = createApp({ clientOrigin: origin, databaseConfigured: true, hackathonFeed: feed });
+    expect((await request(appWithFeed).get('/api/v1/hackathons')).status).toBe(401);
+    for (const role of ['trainer', 'admin'] as const) {
+      const staff = await account(role);
+      const signIn = await mutation(request(appWithFeed), 'login', { email: staff.email, password });
+      expect(signIn.status).toBe(200);
+      expect((await request(appWithFeed).get('/api/v1/hackathons').set('Cookie', cookie(signIn))).status).toBe(403);
+    }
+    expect(feed).not.toHaveBeenCalled();
+    const learner = await account('student');
+    const signIn = await mutation(request(appWithFeed), 'login', { email: learner.email, password });
+    const response = await request(appWithFeed).get('/api/v1/hackathons').set('Cookie', cookie(signIn));
+    expect(response.status).toBe(200);
+    expect(response.headers['cache-control']).toBe('no-store');
+    expect(feed).toHaveBeenCalledTimes(1);
+    expect(response.body.data.events).toEqual([]);
+  });
+  it('resets only the existing targeted account and invalidates its old sessions and password', async () => {
+    const trainer = await account('trainer');
+    const admin = await account('admin');
+    const signIn = (email: string, pass = password) => mutation(request(app), 'login', { email, password: pass });
+    const old = await signIn(trainer.email);
+    const unaffected = await signIn(admin.email);
+    const newPassword = 'NewTestingPassword42!';
+    expect(await recoverAccount({ email: trainer.email, role: 'admin', password: newPassword })).toBe(false);
+    expect(await recoverAccount({ email: trainer.email, role: 'trainer', password: newPassword })).toBe(true);
+    expect((await request(app).get('/api/v1/auth/me').set('Cookie', cookie(old))).status).toBe(401);
+    expect((await request(app).get('/api/v1/auth/me').set('Cookie', cookie(unaffected))).status).toBe(200);
+    expect((await signIn(trainer.email)).status).toBe(401);
+    expect((await signIn(trainer.email, newPassword)).body.data.user).toMatchObject({ id: trainer.id, role: 'trainer' });
+    expect(await User.countDocuments()).toBe(2);
+  });
   it('registers a student, persists a salted hash, and sends only safe fields', async () => {
     const response = await mutation(request(app), 'register', student);
     expect(response.status).toBe(201);

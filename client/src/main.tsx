@@ -1,5 +1,6 @@
 import { Leaderboard } from "./pages/Leaderboard";
 import { LiveClasses, LiveClassDetails } from './pages/LiveClasses';
+import { Hackathons } from './pages/Hackathons';
 import { RouteAccessibility } from "./components/RouteAccessibility";
 import { Achievements, LeaderboardProfile } from "./pages/Achievements";
 import { StaffAssignmentDirectory } from "./pages/StaffAssignmentDirectory";
@@ -54,6 +55,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route element={<ProtectedRoute role="student" />}>
+            <Route path="/workspace/hackathons" element={<Hackathons />} />
+            <Route path="/hackathons" element={<Navigate to="/workspace/hackathons" replace />} />
             <Route path="/live-classes" element={<LiveClasses role="student"/>}/>
             <Route path="/live-classes/:id" element={<LiveClassDetails role="student"/>}/>
             <Route path="/dashboard/student" element={<StudentDashboard />} />

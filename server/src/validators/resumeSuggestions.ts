@@ -3,6 +3,7 @@ import type { ResumeContent } from './resume.js';
 
 export const resumeSuggestionRequest = z.object({
   consent: z.literal(true),
+  consentProvider: z.string().max(80).optional(),
   jobDescription: z.string().trim().min(50).max(12000),
 }).strict();
 export const resumeSuggestionsSchema = z.object({

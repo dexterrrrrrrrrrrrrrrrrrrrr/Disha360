@@ -11,6 +11,8 @@ import type { databaseStatus } from "./config/database.js";
 import { authRoutes } from "./routes/auth.js";
 import { studentRoutes } from "./routes/student.js";
 import type { InterviewProvider } from "./services/interviewProvider.js";
+import { requireAuth, requireRole } from "./middleware/auth.js";
+import { createHackathonFeed } from "./services/hackathons.js";
 
 export function createApp(options: {
   clientOrigin: string;
@@ -27,6 +29,7 @@ export function createApp(options: {
   executionSetupMessage?: string;
   executionRateLimit?: number;
   codingDemoMode?: boolean;
+  hackathonFeed?: ReturnType<typeof createHackathonFeed>;
 }) {
   if (options.cookieSameSite === 'none' && !options.secureCookies) throw new Error('SameSite=None requires secure cookies');
   const app = express();
@@ -59,6 +62,10 @@ export function createApp(options: {
     "/api/v1/auth",
     authRoutes({ ...options, secureCookies: options.secureCookies ?? false }),
   );
+  const hackathonFeed = options.hackathonFeed ?? createHackathonFeed();
+  app.get("/api/v1/hackathons", requireAuth, requireRole("student"), async (_req, res) => {
+    res.set("Cache-Control", "no-store").json({ success: true, data: await hackathonFeed() });
+  });
   app.use(
     "/api/v1/student",
     studentRoutes(

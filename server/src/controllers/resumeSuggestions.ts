@@ -11,6 +11,8 @@ export function resumeSuggestionController(provider?: InterviewProvider): Reques
     const resume = await ownedResume(req.params.id, req.user!.id as string);
     if (!provider?.resumeSuggestions)
       throw new AppError(503, 'AI_SETUP_REQUIRED', 'Qualitative resume suggestions require a configured AI provider. The ATS heuristic remains available.');
+    if ((provider.name === 'GroqCloud' || input.consentProvider) && input.consentProvider !== provider.name)
+      throw new AppError(409, 'AI_CONSENT_REQUIRED', 'Reload this page and review the current AI provider before sending resume text.');
     const prepared = prepareResumeSuggestions(resumeContentSchema.parse(resume.content), input.jobDescription);
     const raw = await provider.resumeSuggestions(prepared);
     const result = resumeSuggestionsSchema.safeParse(raw);

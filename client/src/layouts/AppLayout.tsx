@@ -35,6 +35,7 @@ export function AppLayout({
   const location = useLocation();
   const destinations: Record<string, string> = {
     'Live classes': role === 'student' ? '/live-classes' : `/manage/${role}/live-classes`,
+    Hackathons: "/workspace/hackathons",
     Leaderboard:
       role === "student" ? "/leaderboard" : `/manage/${role}/leaderboard`,
     Achievements: "/achievements",
@@ -76,6 +77,7 @@ export function AppLayout({
   }
   const student = [
     ['Live classes', Users],
+    ['Hackathons', Trophy],
     ["Learning modules", BookOpen],
     ["Assessments", FileText],
     ["Performance analytics", BarChart3],
@@ -221,7 +223,9 @@ export function AppLayout({
             <span className="min-w-0 text-sm text-slate-500">
               <span className="hidden sm:inline">Workspace <span className="mx-2 text-slate-300">/</span></span>
               <span className="font-medium text-ink">
-                {location.pathname.startsWith('/live-classes')
+                {location.pathname === "/workspace/hackathons"
+                  ? "Hackathons"
+                  : location.pathname.startsWith('/live-classes')
                   ? 'Live classes'
                   : location.pathname.startsWith("/leaderboard")
                   ? "Leaderboard"

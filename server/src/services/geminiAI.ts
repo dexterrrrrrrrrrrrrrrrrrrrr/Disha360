@@ -8,25 +8,23 @@ import { interviewQuestionInstructions, interviewFeedbackInstructions, codingMen
 import { resumeSuggestionsJsonSchema, resumeSuggestionsSchema, resumeSuggestionInputSchema, type ResumeSuggestionInput } from '../validators/resumeSuggestions.js';
 import type { InterviewProvider } from './interviewProvider.js';
 import { mentorContextSchema, mentorJsonSchema, mentorResponseSchema, type MentorContext } from '../validators/codingMentor.js';
+import { StructuredAI } from './structuredAI.js';
 
 export const AI_UNAVAILABLE_MESSAGE = 'The AI service is temporarily unavailable or its free usage limit has been reached. Please try again later.';
 export const geminiLimits = { timeoutMs: 45000, inputBytes: 85000, outputBytes: 100000, requestsPerMinute: 10, concurrentRequests: 2 } as const;
 export interface GeminiSettings { primaryKey?: string; backupKey?: string; keySelection?: 'primary' | 'backup'; model: string }
 export interface GeminiTransport { generateContent(params: GenerateContentParameters): Promise<Pick<GenerateContentResponse, 'text' | 'candidates' | 'promptFeedback'>> }
 export type GeminiClientFactory = (options: GoogleGenAIOptions) => GeminiTransport;
-const questionSchema = z.object({ question: z.string().trim().min(10).max(1500) }).strict();
-const questionJsonSchema = { type: 'object', properties: { question: { type: 'string' } }, required: ['question'], additionalProperties: false };
-const transcriptSchema = z.array(z.object({ role: z.enum(['interviewer', 'student']), text: z.string().min(1).max(5000), at: z.date() }).strict()).max(20);
-
 // One backend client and shared limits for all Gemini features. No automatic key,
 // provider or model fallbacks, tools, grounding, caches or paid resource creation.
-export class GeminiAIService implements InterviewProvider {
+export class GeminiAIService extends StructuredAI {
   readonly name = 'Google Gemini';
   private readonly client: GeminiTransport;
   private readonly model: string;
   private requests: number[] = [];
   private active = 0;
   constructor(settings: GeminiSettings, createClient: GeminiClientFactory = options => new GoogleGenAI(options).models) {
+    super();
     const key = settings.keySelection === 'backup' ? settings.backupKey : settings.primaryKey;
     if (!key?.trim()) throw new AppError(503, 'AI_CONFIGURATION_ERROR', 'The selected Gemini credential is missing. Ask the operator to configure the backend and restart it.');
     if (!/^gemini-[a-zA-Z0-9.-]+$/.test(settings.model))
@@ -35,7 +33,7 @@ export class GeminiAIService implements InterviewProvider {
     this.client = createClient({ apiKey: key, enterprise: false, vertexai: false,
       httpOptions: { timeout: geminiLimits.timeoutMs, retryOptions: { attempts: 1 } } });
   }
-  private async json<T>(instructions: string, input: unknown, schema: unknown, validate: z.ZodType<T>, maxOutputTokens: number): Promise<T> {
+  protected async json<T>(instructions: string, input: unknown, schema: unknown, validate: z.ZodType<T>, maxOutputTokens: number): Promise<T> {
     const contents = JSON.stringify(input);
     if (Buffer.byteLength(contents, 'utf8') > geminiLimits.inputBytes)
       throw new AppError(413, 'AI_INPUT_TOO_LARGE', 'This AI request is too large. Shorten the supplied text and try again.');

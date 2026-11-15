@@ -6,12 +6,13 @@ const userSchema = new Schema({
   name: { type: String, required: true, trim: true, minlength: 2, maxlength: 80 },
   email: { type: String, required: true, trim: true, lowercase: true, maxlength: 254, unique: true, match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
   passwordHash: { type: String, required: true, select: false, match: /^scrypt\$[a-f0-9]{32}\$[a-f0-9]{128}$/ },
+  authVersion: { type: Number, default: 0, select: false },
   role: { type: String, enum: roles, required: true, default: 'student' },
   department: { type: String, trim: true, maxlength: 100, required: function (this: { role: string }): boolean { return this.role === 'student'; } },
   semester: { type: Number, min: 1, max: 12, validate: Number.isInteger, required: function (this: { role: string }): boolean { return this.role === 'student'; } },
   isDemo: { type: Boolean, default: false, select: false }
 }, { timestamps: true, autoCreate: false, autoIndex: false });
-userSchema.set('toJSON', { transform: (_doc, ret) => { const { passwordHash, isDemo, ...safe } = ret; return safe; } });
+userSchema.set('toJSON', { transform: (_doc, ret) => { const { passwordHash, authVersion, isDemo, ...safe } = ret; return safe; } });
 userSchema.index({ role: 1, isDemo: 1, _id: 1 });
 export const User = mongoose.model('User', userSchema);
 export type UserDocument = mongoose.HydratedDocument<mongoose.InferSchemaType<typeof userSchema>>;
