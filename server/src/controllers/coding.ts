@@ -12,6 +12,7 @@ import {
   type ExecutionProvider,
 } from "../services/codeExecution.js";
 import { dockerLimits } from '../services/dockerExecution.js';
+import { javascriptLimits } from "../services/javascriptExecution.js";
 import { AppError } from "../utils/AppError.js";
 export function codingControllers(provider?: ExecutionProvider, demoMode = false, setupMessage?: string) {
   const config: RequestHandler = async (_req, res) => {
@@ -21,11 +22,14 @@ export function codingControllers(provider?: ExecutionProvider, demoMode = false
       data: {
         configured: !!provider && availability?.available !== false,
         demoMode,
+        supportedLanguages: provider ? provider.supportedLanguages ?? languages : [],
         provider: provider?.name || null,
-        limits: provider?.name === 'Local Docker sandbox' ? dockerLimits : provider?.name === 'OneCompiler' ? { outputBytes: executionLimits.outputBytes, timeoutMs: 20000, isolationLimits: 'Provider-managed; no application-enforced CPU, memory or network sandbox guarantees.' } : executionLimits,
+        limits: provider?.name === 'Disha360 JavaScript runner' ? javascriptLimits : provider?.name === 'Local Docker sandbox' ? dockerLimits : provider?.name === 'OneCompiler' ? { outputBytes: executionLimits.outputBytes, timeoutMs: 20000, isolationLimits: 'Provider-managed; no application-enforced CPU, memory or network sandbox guarantees.' } : executionLimits,
         message: demoMode
           ? "Coding Demo Mode: No code execution or grading. Code and custom input are not processed. Demo actions do not affect scores, points, badges or analytics."
           : availability?.available === false ? availability.message
+          : provider?.name === "Disha360 JavaScript runner"
+          ? "Run and Submit are available in JavaScript. Use console.log for output; the starter template reads your input."
           : provider
           ? `Code runs on ${provider.name}. Run output is not a judged solution. Code and input are shared with the execution provider.`
           : process.env.NODE_ENV === "development" && setupMessage
@@ -121,6 +125,8 @@ export function codingControllers(provider?: ExecutionProvider, demoMode = false
         "EXECUTION_SETUP_REQUIRED",
         "Code execution is unavailable until a trusted isolated provider is configured.",
       );
+    if (provider.supportedLanguages && !provider.supportedLanguages.includes(input.language))
+      throw new AppError(400, "UNSUPPORTED_LANGUAGE", "This runner does not support the selected language.");
     const result = await provider.execute(input);
     res.json({ success: true, data: { execution: result } });
   };

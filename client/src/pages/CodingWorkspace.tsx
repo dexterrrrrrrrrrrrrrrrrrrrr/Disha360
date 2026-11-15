@@ -35,7 +35,7 @@ export function CodingWorkspace() {
     <AppLayout role="student">
       <PageHeading
         title="Coding workspace"
-        detail="Write and save code. Use a configured execution provider or clearly labeled demo actions."
+        detail="Run code with your own input, or save a draft to finish later."
       />
       <Link className="btn-secondary mb-5 inline-block" to="/coding/problems">
         Browse challenges →
@@ -49,22 +49,29 @@ export function Workspace({
   sample = "",
   onSubmit,
   problemId,
+  problemLanguages,
   submissionSummary,
 }: {
   scope: string;
   sample?: string;
   problemId?: string;
+  problemLanguages?: Language[];
   submissionSummary?: { verdict: string | null; passed: number; total: number };
   onSubmit?: (language: Language, source: string) => Promise<void>;
 }) {
   const config = useStudentData<{
     configured: boolean;
+    supportedLanguages?: Language[];
     demoMode: boolean;
     message: string;
   }>(
     "/coding/config",
   );
-  const [language, setLanguage] = useState<Language>("python");
+  const [selectedLanguage, setLanguage] = useState<Language>();
+  const editableLanguages = problemLanguages ?? (Object.keys(templates) as Language[]);
+  const runnableLanguages = editableLanguages.filter((l) => config.data?.supportedLanguages?.includes(l) ?? true);
+  const language = selectedLanguage ?? runnableLanguages[0] ?? editableLanguages[0];
+  const canExecute = config.data?.demoMode === true || (config.data?.configured && runnableLanguages.includes(language));
   const [plainEditor, setPlainEditor] = useState(false);
   const [source, setSource] = useState(templates.python);
   const [stdin, setStdin] = useState(sample);
@@ -88,6 +95,7 @@ export function Workspace({
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
   useEffect(() => {
+    if (config.loading) return;
     let alive = true;
     setLoading(true);
     setLoadFailed(false);
@@ -119,9 +127,9 @@ export function Workspace({
     return () => {
       alive = false;
     };
-  }, [scope, language, sample, retry]);
+  }, [scope, language, sample, retry, config.loading]);
   async function act(kind: string) {
-    if (actionLock.current) return;
+    if (actionLock.current || ((kind === "run" || kind === "submit") && !canExecute)) return;
     actionLock.current = true;
     setBusy(kind);
     setError("");
@@ -194,7 +202,7 @@ export function Workspace({
                 setLanguage(e.target.value as Language);
             }}
           >
-            {Object.keys(templates).map((l) => (
+            {editableLanguages.map((l) => (
               <option key={l} value={l}>
                 {
                   {
@@ -203,7 +211,7 @@ export function Workspace({
                     cpp: "C++",
                     javascript: "JavaScript",
                   }[l]
-                }
+                }{!demoMode && config.data?.configured && !runnableLanguages.includes(l) ? " (drafts only)" : ""}
               </option>
             ))}
           </select>
@@ -237,7 +245,7 @@ export function Workspace({
               loading ||
               loadFailed ||
               !source ||
-              !(demoMode || config.data?.configured)
+              !canExecute
             }
             onClick={() => void act("run")}
           >
@@ -251,7 +259,7 @@ export function Workspace({
                 loading ||
                 loadFailed ||
                 !source ||
-                !(demoMode || config.data?.configured)
+                !canExecute
               }
               onClick={() => void act("submit")}
             >

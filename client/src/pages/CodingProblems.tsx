@@ -114,7 +114,7 @@ export function CodingProblems() {
           ))}
         </div>
       ) : (
-        <Empty message="No published problems match. An operator can explicitly seed the development problem bank." />
+        <Empty message="No challenges match. Try clearing the difficulty or topic filters." />
       )}
     </AppLayout>
   );
@@ -223,6 +223,7 @@ export function CodingChallenge() {
             <div className="min-w-0"><Workspace
               key={id}
               problemId={id}
+              problemLanguages={p.supportedLanguages}
               submissionSummary={result ? { verdict: result.verdict, passed: result.passed, total: result.total } : undefined}
               scope={`problem-${id}`}
               sample={p.examples[0]?.input || ""}
@@ -315,7 +316,7 @@ export function CodingHistory() {
           </table>
         </section>
       ) : (
-        <Empty message="No submissions yet. Configure an isolated execution provider, then submit a challenge." />
+        <Empty message="No submissions yet. Open a coding challenge and submit your solution." />
       )}
     </AppLayout>
   );

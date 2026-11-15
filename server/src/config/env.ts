@@ -16,7 +16,7 @@ export const envSchema = z.object({
   OLLAMA_BASE_URL: z.string().url().default('http://127.0.0.1:11434').refine(value => { const u = new URL(value); return !u.username && !u.password && u.pathname === '/' && !u.search && !u.hash && (u.protocol === 'https:' || (u.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(u.hostname))); }, 'Use a loopback HTTP or trusted HTTPS origin without credentials.'),
   OLLAMA_MODEL: z.string().trim().max(100).default(''),
   LOCAL_CODE_EXECUTION_ENABLED: z.enum(['false']).default('false'), // Legacy setting; use the explicit Docker provider selection.
-  CODING_EXECUTION_PROVIDER: z.enum(['auto', 'docker', 'onecompiler', 'judge0', 'disabled']).default('auto'),
+  CODING_EXECUTION_PROVIDER: z.enum(['auto', 'docker', 'javascript', 'onecompiler', 'judge0', 'disabled']).default('auto'),
   DOCKER_RUNNER_URL: z.string().url().default('http://127.0.0.1:4010').refine(value => { const u = new URL(value); return u.protocol === 'http:' && u.hostname === '127.0.0.1' && !u.username && !u.password && u.pathname === '/' && !u.search && !u.hash; }, 'Use the local worker loopback HTTP origin.'),
   DOCKER_RUNNER_TOKEN_FILE: z.preprocess(v => v === '' ? undefined : v, z.string().min(1).optional()),
   GEMINI_API_KEY: z.string().trim().optional(),
