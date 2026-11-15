@@ -48,7 +48,7 @@ it('validates interview feedback, resume suggestions and coding mentor output', 
   const mentor = { explanation: 'Start by tracing the loop.', nextSteps: ['Try a small input.'] };
   await expect(mock(response(mentor)).ai.codingMentor({
     language: 'python', source: 'print(1)', problem: null, action: 'hint', hintLevel: 1,
-    allowSolution: false, error: '',
+    allowSolution: false, error: '', prompt: '',
   })).resolves.toEqual(mentor);
 });
 
