@@ -1,13 +1,43 @@
-import { beforeAll, beforeEach, afterAll, it, expect } from 'vitest';
+import { beforeAll, beforeEach, afterAll, it, expect, vi } from 'vitest';
 import { testDatabase, studentAccount, testApp, studentCall } from './helpers/student.js';
 import { assessmentFixture } from './helpers/assessment.js';
 import { Assessment, Question, TestAttempt } from '../src/models/Assessment.js';
 import { Activity } from '../src/models/Preparation.js';
 import { shuffle, sweepExpiredAttempts } from '../src/services/assessments.js';
 import { seedSampleAssessments } from '../src/services/sampleAssessments.js';
+import { createApp } from '../src/app.js';
+import { GroqAI, groqModel } from '../src/services/groqAI.js';
 let db: Awaited<ReturnType<typeof testDatabase>>;
 beforeAll(async () => { db = await testDatabase(); }, 180000); beforeEach(async () => { await db.clear(); }); afterAll(async () => { if (db) await db.close(); });
 async function start(overrides: Record<string, unknown> = {}) { const s = await studentAccount(); const bank = await assessmentFixture(overrides); const app = testApp(); const result = await studentCall(app, s.cookie, 'post', `/assessments/${bank.assessment.id}/attempts`, {}); expect(result.status).toBe(201); return { s, bank, app, attempt: result.body.data.attempt }; }
+it('requests Groq coaching only for a consenting student with completed results and sends aggregates only', async () => {
+  const { s, app, attempt } = await start();
+  const staff = await studentAccount('trainer');
+  const other = await studentAccount();
+  const plan = { summary: 'Start with a short arithmetic review.', steps: ['Practice five addition problems.'] };
+  const send = vi.fn<typeof fetch>().mockImplementation(async () => Response.json({ choices: [
+    { finish_reason: 'stop', message: { content: JSON.stringify(plan) } },
+  ] }));
+  const aiApp = createApp({ clientOrigin: 'http://localhost:5173', databaseConfigured: true,
+    interviewProvider: new GroqAI('fixture-key', groqModel, 2, send) });
+  const ask = (cookie: string, body: object) => studentCall(aiApp, cookie, 'post', '/analytics/coach', body);
+  const approved = { consent: true, consentProvider: 'GroqCloud' };
+  expect((await ask(s.cookie, approved)).status).toBe(422);
+  expect((await ask(staff.cookie, approved)).status).toBe(403);
+  expect((await ask(s.cookie, {})).status).toBe(400);
+  expect((await ask(s.cookie, { ...approved, consentProvider: 'Other provider' })).status).toBe(409);
+  const graded = await studentCall(app, s.cookie, 'post', `/attempts/${attempt.id}/submit`, { version: 1 });
+  expect(graded.status).toBe(200);
+  expect((await ask(other.cookie, approved)).status).toBe(422);
+  expect(send).not.toHaveBeenCalled();
+  expect((await ask(s.cookie, approved)).body).toEqual({ success: true, data: { ...plan, provider: 'GroqCloud' } });
+  expect(send).toHaveBeenCalledTimes(1);
+  const payload = JSON.parse(send.mock.calls[0][1]!.body as string);
+  expect(JSON.parse(payload.messages[1].content)).toEqual({ completedAttempts: 1,
+    categories: [{ category: 'quantitative', questions: 4, correct: 0, accuracy: 0 }] });
+  const saved = await studentCall(app, s.cookie, 'get', `/attempts/${attempt.id}`);
+  expect(saved.body.data.attempt.result).toEqual(graded.body.data.attempt.result);
+});
 it('randomizes with Fisher-Yates without mutating the source and preserves a question snapshot on refresh', async () => {
   const original = [1, 2, 3, 4]; expect(shuffle(original, () => 0)).toEqual([2, 3, 4, 1]); expect(original).toEqual([1, 2, 3, 4]);
   const { s, app, attempt, bank } = await start(); expect(attempt.questions).toHaveLength(4); expect(new Set(attempt.questions.map((q: { questionId: string }) => q.questionId)).size).toBe(4);

@@ -3,8 +3,8 @@ import type { InterviewProvider } from '../services/interviewProvider.js';
 import { CodingProblem } from '../models/CodingProblem.js';
 import { mentorRequest, mentorResponseSchema } from '../validators/codingMentor.js';
 import { AppError } from '../utils/AppError.js';
-export function codingMentorControllers(provider?: InterviewProvider) {
-  const config: RequestHandler = async (_req, res) => { const status = provider?.availability ? await provider.availability() : undefined; res.json({ success: true, data: { configured: !!provider?.codingMentor && status?.available !== false, provider: provider?.name ?? null, streaming: !!provider?.codingMentorStream, model: status?.model, message: status?.message ?? (provider?.codingMentor ? 'Backend provider configured; live availability is not verified.' : 'Configure AI_PROVIDER=ollama, start ollama serve and select an installed OLLAMA_MODEL. See docs/LOCAL_DEVELOPMENT.md.') } }); };
+export function codingMentorControllers(provider?: InterviewProvider, setupMessage?: string) {
+  const config: RequestHandler = async (_req, res) => { const status = provider?.availability ? await provider.availability() : undefined; res.json({ success: true, data: { configured: !!provider?.codingMentor && status?.available !== false, provider: provider?.name ?? null, streaming: !!provider?.codingMentorStream, model: status?.model, message: status?.message ?? (provider?.codingMentor ? 'Backend provider configured; live availability is not verified.' : (setupMessage ?? 'Ask an administrator to configure the backend AI provider.')) } }); };
   const context = async (req: Parameters<RequestHandler>[0]) => {
     const { problemId, consentProvider, ...input } = mentorRequest.parse(req.body);
     let problem = null;

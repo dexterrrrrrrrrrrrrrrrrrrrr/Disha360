@@ -7,7 +7,8 @@ import { answeredQuestions } from './interviewFeedback.js';
 import { interviewQuestionInstructions, interviewFeedbackInstructions, codingMentorInstructions } from './aiPrompts.js';
 import type { ResumeSuggestionInput, ResumeSuggestions } from '../validators/resumeSuggestions.js';
 import { mentorContextSchema, mentorJsonSchema, mentorResponseSchema, type MentorContext, type MentorResponse } from '../validators/codingMentor.js';
-export interface InterviewProvider { name: string; availability?(): Promise<{ available: boolean; message: string; model?: string }>; codingMentorStream?(input: MentorContext, signal: AbortSignal): AsyncIterable<string>; question(setup: InterviewSetup, transcript: InterviewMessage[]): Promise<string>; feedback?(setup: InterviewSetup, transcript: InterviewMessage[]): Promise<unknown>; resumeSuggestions?(input: ResumeSuggestionInput): Promise<ResumeSuggestions>; codingMentor?(input: MentorContext): Promise<MentorResponse> }
+import type { AssessmentCoachInput, AssessmentPlan } from '../validators/assessmentCoach.js';
+export interface InterviewProvider { name: string; availability?(): Promise<{ available: boolean; message: string; model?: string }>; codingMentorStream?(input: MentorContext, signal: AbortSignal): AsyncIterable<string>; question(setup: InterviewSetup, transcript: InterviewMessage[]): Promise<string>; feedback?(setup: InterviewSetup, transcript: InterviewMessage[]): Promise<unknown>; resumeSuggestions?(input: ResumeSuggestionInput): Promise<ResumeSuggestions>; codingMentor?(input: MentorContext): Promise<MentorResponse>; assessmentCoach?(input: AssessmentCoachInput): Promise<AssessmentPlan> }
 const outputSchema = z.object({ question: z.string().trim().min(10).max(1500) }).strict();
 export class OpenAIInterviewProvider implements InterviewProvider {
   readonly name = 'OpenAI Responses API';
