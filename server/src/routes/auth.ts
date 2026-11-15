@@ -4,6 +4,7 @@ import { register, login, logout, me } from '../controllers/auth.js';
 import { protectMutations, requireAuth, requireRole } from '../middleware/auth.js';
 import { AppError } from '../utils/AppError.js';
 import { databaseStatus } from '../config/database.js';
+import { registerStaff } from '../controllers/staffSignup.js';
 
 export function authRoutes(options: { clientOrigin: string; secureCookies: boolean; cookieSameSite?: 'lax' | 'strict' | 'none'; status?: typeof databaseStatus; authRateLimit?: number }) {
   const router = Router();
@@ -15,6 +16,7 @@ export function authRoutes(options: { clientOrigin: string; secureCookies: boole
     next();
   });
   router.post('/register', limit, register(options.secureCookies, options.cookieSameSite));
+  router.post('/register/staff', limit, registerStaff);
   router.post('/login', limit, login(options.secureCookies, options.cookieSameSite));
   router.post('/logout', logout(options.secureCookies, options.cookieSameSite));
   router.get('/me', requireAuth, me);

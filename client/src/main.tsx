@@ -54,6 +54,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/register/staff" element={<Register key="staff" staff />} />
           <Route element={<ProtectedRoute role="student" />}>
             <Route path="/workspace/hackathons" element={<Hackathons />} />
             <Route path="/hackathons" element={<Navigate to="/workspace/hackathons" replace />} />

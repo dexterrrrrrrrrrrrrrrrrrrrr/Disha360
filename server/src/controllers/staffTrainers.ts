@@ -21,7 +21,7 @@ export const trainers: RequestHandler = async (req, res) => {
   const selected = all.filter(
     (t) =>
       !q.search ||
-      `${t.name} ${t.email}`.toLowerCase().includes(q.search.toLowerCase()),
+      `${t.name} ${t.email} ${t.department ?? ''}`.toLowerCase().includes(q.search.toLowerCase()),
   );
   const [batches, modules, assessments] = await Promise.all([
     Batch.find().sort({ name: 1 }),
@@ -58,6 +58,7 @@ export const trainers: RequestHandler = async (req, res) => {
         id: t.id,
         name: t.name,
         email: t.email,
+        department: t.department ?? null,
         batches: assigned.map((b) => ({
           id: b.id,
           name: b.name,

@@ -28,6 +28,7 @@ export function Login() {
     <h1 className="text-3xl font-bold tracking-tight text-ink">Welcome back</h1>
     <p className="mb-8 mt-3 text-sm leading-6 text-slate-500">Sign in to Disha360 and continue your journey.</p>
     {(location.state?.loggedOut || auth.notice === 'loggedOut') && <p role="status" className="mb-5 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">You’ve been signed out successfully.</p>}
+    {location.state?.staffRegistered && <p role="status" className="mb-5 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">Staff account created. Sign in with your work email and password.</p>}
     {(error || auth.error) && <p role="alert" className="mb-5 rounded-lg border border-red-100 bg-red-50 p-3 text-sm text-red-700">{error || auth.error}</p>}
     <form onSubmit={submit} aria-busy={busy}><fieldset disabled={busy || auth.loading} className="space-y-5">
       <div><label htmlFor="email" className="field-label">Email address</label><div className="relative"><Mail size={17} className="absolute left-3.5 top-3.5 text-slate-400"/><input id="email" name="email" type="email" autoComplete="email" required maxLength={254} placeholder="you@college.edu" className="input pl-11"/></div></div>
@@ -35,6 +36,7 @@ export function Login() {
       <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60">{busy || auth.loading ? <><LoaderCircle size={17} className="animate-spin"/>{busy ? 'Signing in…' : 'Checking session…'}</> : <>Sign in <ArrowRight size={16}/></>}</button>
     </fieldset></form>
     <p className="mt-6 text-center text-sm text-slate-500">New student? <Link to="/register" className="font-semibold text-brand hover:underline">Create an account</Link></p>
-    <div className="mt-9 rounded-lg border border-slate-100 bg-slate-50 p-4"><p className="text-xs leading-6 text-slate-500">Students, trainers, and placement officers use the same sign-in. Your account determines your workspace; staff accounts are created by an authorized operator.</p>{import.meta.env.DEV && <p className="mt-2 text-xs leading-5 text-slate-400">Development demo accounts can be created with <code>npm run seed:demo</code>. Ask your project operator for the private demo password.</p>}</div>
+    <p className="mt-3 text-center text-sm text-slate-500">Faculty or staff? <Link to="/register/staff" className="font-semibold text-brand hover:underline">Create a staff account</Link></p>
+    <div className="mt-9 rounded-lg border border-slate-100 bg-slate-50 p-4"><p className="text-xs leading-6 text-slate-500">Students, trainers, and placement officers use the same sign-in. New faculty and staff need an invitation from their administrator.</p>{import.meta.env.DEV && <p className="mt-2 text-xs leading-5 text-slate-400">Development demo accounts can be created with <code>npm run seed:demo</code>. Ask your project operator for the private demo password.</p>}</div>
   </AuthLayout>;
 }

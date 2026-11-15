@@ -26,6 +26,7 @@ import { sweepExpiredAttempts } from "./services/assessments.js";
 import { databaseStatus } from "./config/database.js";
 import { Batch, Enrollment } from "./models/Batch.js";
 import { LiveClass } from './models/LiveClass.js';
+import { StaffInvite } from './models/StaffInvite.js';
 
 if (env.MONGODB_URI) {
   try {
@@ -44,6 +45,7 @@ if (env.MONGODB_URI) {
       CodingSubmission.createIndexes(),
     ]);
     await User.createIndexes();
+    await StaffInvite.createIndexes();
     await Session.createIndexes();
     await Promise.all([
       Activity.createIndexes(),

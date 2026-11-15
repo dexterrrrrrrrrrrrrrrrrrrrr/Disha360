@@ -18,6 +18,8 @@ export const authApi = {
   me: () => call<{ user: AuthUser }>('me'),
   login: (email: string, password: string) => call<{ user: AuthUser }>('login', { email, password }),
   register: (input: Registration) => call<{ user: AuthUser }>('register', input),
+  registerStaff: (input: Omit<Registration, 'semester'> & { inviteCode: string }) =>
+    call<{ message: string }>('register/staff', input),
   logout: () => call<{ message: string }>('logout', {}),
   workspace: (role: string) => call<{ user: AuthUser }>(`workspace/${role}`)
 };

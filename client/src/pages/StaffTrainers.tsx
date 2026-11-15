@@ -8,10 +8,12 @@ import {
   Skeleton,
 } from "../components/StudentUI";
 import { staffRequest, useStaffData } from "../hooks/useStaffData";
+import { StaffInviteForm } from "../features/auth/StaffInviteForm";
 type Trainer = {
   id: string;
   name: string;
   email: string;
+  department: string | null;
   batches: { id: string; name: string; active: boolean }[];
   activeBatches: number;
   students: number;
@@ -64,11 +66,12 @@ export function StaffTrainers() {
     <AppLayout role="admin">
       <PageHeading
         title="Trainer management"
-        detail="Real active batch memberships and owned content. Accounts are created with the existing secure operator command; roles cannot be changed here."
+        detail="Invite faculty and staff to create Trainer accounts, then assign them to the appropriate batches."
       />
+      <StaffInviteForm />
       <section className="card mb-6">
         <label className="block text-sm font-medium">
-          Search trainers
+          Search trainers by name, email, or department
           <input
             className="input mt-2"
             type="search"
@@ -159,6 +162,7 @@ export function StaffTrainers() {
             <section className="card" key={t.id}>
               <h2 className="text-lg font-semibold">{t.name}</h2>
               <p className="mt-2 break-all text-xs text-slate-500">{t.email}</p>
+              {t.department && <p className="mt-1 text-xs text-slate-600">{t.department}</p>}
               <dl className="mt-5 grid grid-cols-2 gap-4 text-sm">
                 {[
                   ["Active assigned batches", t.activeBatches],
@@ -216,7 +220,7 @@ export function StaffTrainers() {
           ))}
         </div>
       ) : (
-        <Empty message="No matching Trainers. Use the documented user:create command to provision an account securely." />
+        <Empty message="No matching Trainers. You can invite someone using their work email." />
       )}
     </AppLayout>
   );
