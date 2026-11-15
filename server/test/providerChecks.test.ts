@@ -48,3 +48,16 @@ it('checks local Docker independently of OneCompiler credentials and preserves t
   const result=await checkProviders({...envSchema.parse({CODING_EXECUTION_PROVIDER:'docker'}),AI_PROVIDER:'openai',DOCKER_RUNNER_TOKEN_FILE:'/nonexistent/local-token'});
   expect(result.checks.at(-1)?.feature).toBe('Local Docker Run and Submit');expect(JSON.stringify(result.checks.at(-1))).not.toContain('ONECOMPILER_API_KEY');
 });
+it('reports GroqCloud independently from intentionally disabled code execution without requesting either provider', async () => {
+  const lookup = vi.fn();
+  const result = await checkProviders(envSchema.parse({
+    AI_PROVIDER: 'groq', GROQ_API_KEY: 'fixture-only-key', GROQ_MODEL: 'openai/gpt-oss-20b',
+    CODING_EXECUTION_PROVIDER: 'disabled', ONECOMPILER_ENABLED: 'true',
+  }), lookup);
+  expect(result.checks).toMatchObject([
+    { feature: 'GroqCloud AI', status: 'configured' },
+    { feature: 'Code execution', status: 'blocked' },
+  ]);
+  expect(JSON.stringify(result)).not.toMatch(/fixture-only-key|ONECOMPILER_API_KEY|Gemini/);
+  expect(lookup).not.toHaveBeenCalled();
+});

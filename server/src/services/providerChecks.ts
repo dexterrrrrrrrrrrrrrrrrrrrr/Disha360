@@ -1,6 +1,7 @@
 import { configureExecution } from './executionProvider.js';
 import { OllamaAIService } from './ollamaAI.js';
 import { GoogleGenAI } from '@google/genai';
+import { groqModel } from './groqAI.js';
 import type { AISettings } from './aiProvider.js';
 import type { ExecutionSettings } from './executionProvider.js';
 
@@ -18,6 +19,12 @@ export async function checkProviders(settings: Settings, lookup: ModelReader = r
   if (settings.AI_PROVIDER === 'ollama') {
     try { const status = await new OllamaAIService(settings.OLLAMA_BASE_URL ?? 'http://127.0.0.1:11434', settings.OLLAMA_MODEL ?? '').availability(); checks.push({ feature: 'Ollama interviews and coding mentor', status: status.available ? 'verified' : 'blocked', message: status.message }); }
     catch { checks.push({ feature: 'Ollama interviews and coding mentor', status: 'blocked', message: 'Start Ollama and configure OLLAMA_MODEL to the exact name from ollama list. No cloud credential is required.' }); }
+  }
+  else if (settings.AI_PROVIDER === 'groq') {
+    const configured = Boolean(settings.GROQ_API_KEY?.trim()) && settings.GROQ_MODEL === groqModel;
+    checks.push({ feature: 'GroqCloud AI', status: configured ? 'configured' : 'blocked',
+      message: configured ? 'GroqCloud is configured. Run npm run groq:check -w server to check model access without generating text.'
+        : `Set GROQ_API_KEY privately and GROQ_MODEL=${groqModel}.` });
   }
   else if (settings.AI_PROVIDER === 'openai') checks.push({ feature: 'OpenAI interviews and coding mentor', status: settings.OPENAI_API_KEY?.trim() ? 'configured' : 'blocked', message: settings.OPENAI_API_KEY?.trim() ? 'An explicitly configured OpenAI credential is present. Model access and generation availability are unverified; no paid request was made.' : 'The selected optional OpenAI provider has no explicitly configured backend key. Select Ollama for local AI without cloud credits.' });
   else if (!key?.trim()) checks.push({ feature: 'Gemini interviews and coding mentor', status: 'blocked', message: `Missing ${keyName}. Configure it in secure backend environment settings; no key is requested in chat.` });
@@ -38,6 +45,8 @@ export async function checkProviders(settings: Settings, lookup: ModelReader = r
     const status = execution.provider?.availability ? await execution.provider.availability() : undefined;
     checks.push({ feature: 'Local Docker Run and Submit', status: status?.available ? 'verified' : 'blocked', message: status?.message || execution.message || 'Start the local Docker worker first.' });
   }
+  else if (settings.CODING_EXECUTION_PROVIDER === 'disabled')
+    checks.push({ feature: 'Code execution', status: 'blocked', message: 'Run and Submit are intentionally disabled. No execution credits are used.' });
   else if (!settings.ONECOMPILER_API_KEY?.trim()) checks.push({ feature: 'OneCompiler Run and Submit', status: 'blocked', message: 'Missing ONECOMPILER_API_KEY. Configure it in secure backend environment settings.' });
   else if (!settings.ONECOMPILER_ENABLED) checks.push({ feature: 'OneCompiler Run and Submit', status: 'blocked', message: 'Set ONECOMPILER_ENABLED=true after confirming free credits and billing restrictions.' });
   else if (settings.CODING_DEMO_MODE) checks.push({ feature: 'OneCompiler Run and Submit', status: 'blocked', message: 'Set CODING_DEMO_MODE=false to display real execution actions.' });

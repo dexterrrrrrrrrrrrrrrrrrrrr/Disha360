@@ -62,6 +62,12 @@ private credential channel. Do not bulk-reset or share staff passwords in chat.
 
 ## Hosted coding sandbox
 
+For a deployment that should use zero execution credits, set
+`CODING_EXECUTION_PROVIDER=disabled` and `ONECOMPILER_ENABLED=false` on the
+existing Render service. This keeps draft editing and GroqCloud Coding Mentor
+available while Run and Submit remain unavailable. Leave the GroqCloud
+environment variables in place; the runner and AI settings are independent.
+
 The local Docker runner on `work` is development-only. Do not expose its socket
 or worker to the public internet. A hosted sandbox is a separate release:
 determine that the existing Vercel account is eligible for the

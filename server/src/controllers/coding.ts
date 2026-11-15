@@ -28,7 +28,9 @@ export function codingControllers(provider?: ExecutionProvider, demoMode = false
           : availability?.available === false ? availability.message
           : provider
           ? `Code runs on ${provider.name}. Run output is not a judged solution. Code and input are shared with the execution provider.`
-          : setupMessage || "Execution setup required. Local execution is disabled because a hardened sandbox has not been verified. See docs/LOCAL_DEVELOPMENT.md for isolation requirements, or configure OneCompiler / a trusted hardened Judge0 provider. Draft editing and saving remain available.",
+          : process.env.NODE_ENV === "development" && setupMessage
+          ? setupMessage
+          : "Run and Submit are unavailable. You can still edit and save drafts or ask Coding Mentor for help when AI is available.",
       },
     });
   };
