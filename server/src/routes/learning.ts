@@ -1,5 +1,6 @@
 import { staffScope } from "../services/staffScope.js";
-import { Router } from "express";
+import { raw, Router, type RequestHandler, type Response } from "express";
+import { rateLimit } from "express-rate-limit";
 import { z } from "zod";
 import { databaseStatus } from "../config/database.js";
 import {
@@ -18,6 +19,44 @@ import { objectIdSchema } from "../validators/resume.js";
 import { AppError } from "../utils/AppError.js";
 import { progressDTO } from "../services/learningProgress.js";
 import { recordActivity } from "../services/activity.js";
+const pdfBytes = 2 * 1024 * 1024;
+const pdfsPerModule = 3;
+const pdfUpload = raw({ type: "application/pdf", limit: pdfBytes, inflate: false });
+const pdfVersion = z.object({ version: z.coerce.number().int().positive().max(Number.MAX_SAFE_INTEGER) }).strict();
+
+function pdfName(header: string | undefined) {
+  try {
+    const name = decodeURIComponent(header ?? "");
+    if (name.length <= 180 && !/[\x00-\x1f\x7f/\\]/.test(name) && /\.pdf$/i.test(name)) {
+      const base = name.slice(0, -4).replace(/[^A-Za-z0-9._ -]/g, "-").trim().replace(/^\.+/, "");
+      return (base.slice(0, 100).trim() || "lesson") + ".pdf";
+    }
+  } catch { /* Malformed filename. */ }
+  throw new AppError(400, "INVALID_PDF_NAME", "Choose a file with a .pdf extension.");
+}
+
+function hasPdfMarkers(bytes: Buffer) {
+  // Check framing only. Uploaded PDFs are never rendered or executed by Disha360.
+  return /^%PDF-(?:1\.[0-7]|2\.0)(?:\r|\n)/.test(bytes.subarray(0, 12).toString("latin1")) &&
+    /(?:\r|\n)%%EOF[ \t\r\n\f]*$/.test(bytes.subarray(-1024).toString("latin1"));
+}
+
+async function sendLessonPdf(filter: object, lessonId: string, res: Response) {
+  const module = await LearningModule.findOne({
+    ...filter,
+    lessons: { $elemMatch: { _id: lessonId, "pdf.name": { $exists: true } } },
+  }).select("+pdfFiles");
+  const meta = module?.lessons.id(lessonId)?.pdf;
+  const bytes = module?.pdfFiles?.get(lessonId);
+  if (!meta?.name || !bytes || bytes.length !== meta.size)
+    throw new AppError(404, "NOT_FOUND", "PDF not found.");
+  res.set({
+    "Content-Type": "application/pdf",
+    "Content-Disposition": `attachment; filename="${meta.name}"`,
+    "Content-Security-Policy": "sandbox; default-src 'none'",
+  }).send(bytes);
+}
+
 export function moduleDTO(m: InstanceType<typeof LearningModule>) {
   return {
     id: m.id,
@@ -32,6 +71,7 @@ export function moduleDTO(m: InstanceType<typeof LearningModule>) {
       kind: l.kind,
       body: l.body,
       url: l.url,
+      ...(l.pdf?.name ? { pdf: { name: l.pdf.name, size: l.pdf.size } } : {}),
     })),
     published: m.published,
     version: m.version,
@@ -69,9 +109,9 @@ export function learningRoutes(origin: string, status = databaseStatus) {
     res.json({
       success: true,
       data: {
-        uploadsConfigured: false,
-        message:
-          "Text and external HTTPS resources are supported. PDF/file uploads require private storage and are unavailable.",
+        uploadsConfigured: true,
+        pdfBytes,
+        pdfsPerModule,
       },
     }),
   );
@@ -120,6 +160,9 @@ export function learningRoutes(origin: string, status = databaseStatus) {
         "Published modules must contain lessons.",
       );
     const { version, ...fields } = input;
+    const removedPdfKeys = Object.fromEntries(m.lessons
+      .filter((lesson) => lesson.pdf && !ids.includes(lesson.id))
+      .map((lesson) => [`pdfFiles.${lesson.id}`, 1]));
     const saved = await LearningModule.findOneAndUpdate(
       {
         _id: m._id,
@@ -131,10 +174,11 @@ export function learningRoutes(origin: string, status = databaseStatus) {
           ...fields,
           lessons: input.lessons.map(({ id, ...l }) => ({
             ...l,
-            ...(id ? { _id: id } : {}),
+            ...(id ? { _id: id, pdf: m.lessons.id(id)?.pdf } : {}),
           })),
         },
         $inc: { version: 1 },
+        ...(Object.keys(removedPdfKeys).length ? { $unset: removedPdfKeys } : {}),
       },
       { new: true, runValidators: true },
     );
@@ -146,6 +190,62 @@ export function learningRoutes(origin: string, status = databaseStatus) {
       );
     res.json({ success: true, data: { module: moduleDTO(saved) } });
   });
+  const pdfPath = "/manage/modules/:id/lessons/:lessonId/pdf";
+  const staffFilter = (id: unknown, user: { _id: unknown; role: string }) => ({
+    _id: objectIdSchema.parse(id),
+    ...(user.role === "admin" ? {} : { ownerId: user._id }),
+  });
+  r.get(pdfPath, staff, async (req, res) => {
+    await sendLessonPdf(staffFilter(req.params.id, req.user!), objectIdSchema.parse(req.params.lessonId).toLowerCase(), res);
+  });
+
+  const uploadLimit = rateLimit({
+    windowMs: 60_000,
+    limit: 6,
+    keyGenerator: (req) => req.user!.id,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: { success: false, error: { code: "PDF_UPLOAD_LIMIT", message: "Please wait a minute before uploading more PDFs." } },
+  });
+  const validateUpload: RequestHandler = async (req, _res, next) => {
+    await owned(req.params.id, req.user!);
+    if (!req.is("application/pdf") || (req.get("Content-Encoding") ?? "identity") !== "identity")
+      throw new AppError(415, "PDF_REQUIRED", "Upload an uncompressed PDF file.");
+    next();
+  };
+  const savePdf = (remove: boolean): RequestHandler => async (req, res) => {
+    const { version } = pdfVersion.parse(req.query);
+    const lessonId = objectIdSchema.parse(req.params.lessonId).toLowerCase();
+    const module = await owned(req.params.id, req.user!);
+    const lesson = module.lessons.id(lessonId);
+    if (!lesson || (remove && !lesson.pdf))
+      throw new AppError(404, "NOT_FOUND", "Lesson or PDF not found.");
+    if (module.version !== version)
+      throw new AppError(409, "MODULE_CONFLICT", "Module changed in another tab. Reload before editing PDFs.");
+    const fileKey = `pdfFiles.${lessonId}`;
+    let change;
+    if (remove) {
+      change = { $unset: { "lessons.$.pdf": 1, [fileKey]: 1 } };
+    } else {
+      const name = pdfName(req.get("X-Disha360-Filename"));
+      if (!Buffer.isBuffer(req.body) || !hasPdfMarkers(req.body))
+        throw new AppError(400, "INVALID_PDF", "Choose a valid PDF file.");
+      if (!lesson.pdf && module.lessons.filter((item) => item.pdf).length >= pdfsPerModule)
+        throw new AppError(409, "MODULE_PDF_LIMIT", "This module already has three PDFs. Remove one before adding another.");
+      change = { $set: { "lessons.$.pdf": { name, size: req.body.length }, [fileKey]: req.body } };
+    }
+    const saved = await LearningModule.findOneAndUpdate(
+      { ...staffFilter(req.params.id, req.user!), version, "lessons._id": lessonId },
+      { ...change, $inc: { version: 1 } },
+      { new: true, runValidators: true },
+    );
+    if (!saved)
+      throw new AppError(409, "MODULE_CONFLICT", "Module changed in another tab. Reload before editing PDFs.");
+    res.json({ success: true, data: { module: moduleDTO(saved) } });
+  };
+  r.put(pdfPath, staff, uploadLimit, validateUpload, pdfUpload, savePdf(false));
+  r.delete(pdfPath, staff, savePdf(true));
+
   r.post("/manage/modules/:id/publication", staff, async (req, res) => {
     const input = publishInput.parse(req.body);
     const m = await owned(req.params.id, req.user!);
@@ -243,6 +343,13 @@ export function learningRoutes(origin: string, status = databaseStatus) {
     if (!m) throw new AppError(404, "NOT_FOUND", "Published module not found.");
     return m;
   };
+  r.get("/modules/:id/lessons/:lessonId/pdf", student, async (req, res) => {
+    await sendLessonPdf(
+      { _id: objectIdSchema.parse(req.params.id), published: true },
+      objectIdSchema.parse(req.params.lessonId).toLowerCase(),
+      res,
+    );
+  });
   r.get("/modules/:id", student, async (req, res) => {
     const m = await published(req.params.id);
     const p = await LearningProgress.findOne({

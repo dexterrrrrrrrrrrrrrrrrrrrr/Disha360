@@ -11,7 +11,7 @@ import {
   Skeleton,
 } from "../components/StudentUI";
 import { useLearningData } from "../hooks/useLearningData";
-import { learningRequest } from "../services/learning";
+import { downloadLessonPdf, learningRequest } from "../services/learning";
 import type { Lesson, Module } from "./Learning";
 export function LearningManage() {
   const auth = useAuth();
@@ -33,9 +33,8 @@ export function LearningManage() {
       >
         Create module
       </Link>
-      <p className="mb-5 rounded-lg bg-amber-50 p-4 text-sm text-amber-900">
-        Text and HTTPS resources supported. PDF uploads are unavailable until
-        secure private storage is configured.
+      <p className="mb-5 text-sm text-slate-600">
+        Add text lessons, HTTPS links, and PDF attachments.
       </p>
       {data.error && <ErrorNotice message={data.error} />}{" "}
       {data.loading && !data.data ? (
@@ -151,6 +150,7 @@ export function LearningEditor() {
           body: {
             ...module,
             objectives: module.objectives.map((o) => o.trim()).filter(Boolean),
+            lessons: module.lessons.map(({ pdf: _pdf, ...lesson }) => lesson),
             ...(!isNew ? { version } : {}),
           },
         },
@@ -170,6 +170,44 @@ export function LearningEditor() {
         navigate(`/learning/manage/${role}/${r.module.id}`, { replace: true });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed.");
+    } finally {
+      setBusy("");
+    }
+  }
+  async function editPdf(lessonId: string, file?: File) {
+    setError("");
+    setMessage("");
+    if (file && (!/\.pdf$/i.test(file.name) || file.size > 2 * 1024 * 1024 || !file.size)) {
+      setError("Choose a PDF up to 2 MB.");
+      return;
+    }
+    setBusy("pdf");
+    try {
+      const result = await learningRequest<{ module: Module }>(
+        `/manage/modules/${id}/lessons/${lessonId}/pdf?version=${version}`,
+        file ? { method: "PUT", pdfUpload: { file, filename: file.name } } : { method: "DELETE" },
+      );
+      const pdf = result.module.lessons.find((lesson) => lesson.id === lessonId)?.pdf;
+      setModule((draft) => ({
+        ...draft,
+        lessons: draft.lessons.map((lesson) => lesson.id === lessonId ? { ...lesson, pdf } : lesson),
+      }));
+      setVersion(result.module.version);
+      setMessage(file ? "PDF saved." : "PDF removed.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not update the PDF.");
+    } finally {
+      setBusy("");
+    }
+  }
+  async function downloadPdf(lesson: Lesson) {
+    if (!lesson.pdf) return;
+    setBusy("download");
+    setError("");
+    try {
+      await downloadLessonPdf(`/manage/modules/${id}/lessons/${lesson.id}/pdf`, lesson.pdf.name);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to download the PDF.");
     } finally {
       setBusy("");
     }
@@ -348,6 +386,28 @@ export function LearningEditor() {
                       />
                     </label>
                   )}
+                  {l.id && (
+                    <div className="space-y-2">
+                      <label className="block">
+                        <span className="field-label">{l.pdf ? "Replace PDF" : "Attach PDF"} (up to 2 MB)</span>
+                        <input type="file" className="input" accept=".pdf,application/pdf" onChange={(e) => {
+                          const file = e.currentTarget.files?.[0];
+                          e.currentTarget.value = "";
+                          if (file) void editPdf(l.id!, file);
+                        }} />
+                      </label>
+                      {l.pdf && (
+                        <div className="flex flex-wrap items-center gap-4">
+                          <button type="button" className="text-sm text-brand" onClick={() => void downloadPdf(l)}>
+                            Download {l.pdf.name}
+                          </button>
+                          <button type="button" className="text-sm text-red-700" onClick={() => {
+                            if (window.confirm("Remove this PDF from the lesson?")) void editPdf(l.id!);
+                          }}>Remove PDF</button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <button
                     type="button"
                     className="text-sm text-red-700"
@@ -384,8 +444,8 @@ export function LearningEditor() {
                 Add lesson
               </button>
               <p className="text-xs text-slate-500">
-                Plain text is displayed safely; HTML is not rendered. Secure PDF
-                uploads are unavailable.
+                Save a lesson before attaching its PDF. Up to three PDFs per module.
+                Uploads to published lessons are available to signed-in students immediately.
               </p>
             </section>
             <div className="flex flex-wrap gap-3">

@@ -1,9 +1,12 @@
 import { apiUrl } from './apiUrl';
 import { ApiError } from './auth';
 
-export async function studentRequest<T>(path: string, options: { method?: string; body?: unknown; signal?: AbortSignal; raw?: boolean; prefix?: string } = {}): Promise<T> {
+export async function studentRequest<T>(path: string, options: { method?: string; body?: unknown; signal?: AbortSignal; raw?: boolean; prefix?: string; pdfUpload?: { file: File; filename: string } } = {}): Promise<T> {
   let response: Response;
-  try { response = await fetch(apiUrl(`${options.prefix || '/api/v1/student'}${path}`), { method: options.method || 'GET', credentials: 'include', signal: options.signal, headers: options.method && options.method !== 'GET' ? { 'Content-Type': 'application/json', 'X-Disha360-Request': '1' } : {}, ...(options.body !== undefined ? { body: JSON.stringify(options.body) } : {}) }); }
+  try { response = await fetch(apiUrl(`${options.prefix || '/api/v1/student'}${path}`), { method: options.method || 'GET', credentials: 'include', signal: options.signal, headers: options.pdfUpload
+    ? { 'Content-Type': 'application/pdf', 'X-Disha360-Request': '1', 'X-Disha360-Filename': encodeURIComponent(options.pdfUpload.filename) }
+    : options.method && options.method !== 'GET' ? { 'Content-Type': 'application/json', 'X-Disha360-Request': '1' } : {},
+    body: options.pdfUpload ? options.pdfUpload.file : options.body !== undefined ? JSON.stringify(options.body) : undefined }); }
   catch (error) { if (options.signal?.aborted) throw error; throw new ApiError('Unable to reach the server. Check your connection and retry.', 0); }
   if (options.raw && response.ok) return await response.blob() as T;
   let result;

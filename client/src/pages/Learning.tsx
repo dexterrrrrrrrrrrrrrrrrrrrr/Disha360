@@ -8,13 +8,14 @@ import {
   Skeleton,
 } from "../components/StudentUI";
 import { useLearningData } from "../hooks/useLearningData";
-import { learningRequest } from "../services/learning";
+import { downloadLessonPdf, learningRequest } from "../services/learning";
 export interface Lesson {
   id?: string;
   title: string;
   kind: "text" | "link";
   body: string;
   url: string;
+  pdf?: { name: string; size: number };
 }
 export interface Module {
   id: string;
@@ -46,7 +47,7 @@ export function Learning() {
     <AppLayout role="student">
       <PageHeading
         title="Learning library"
-        detail="Published lessons and trusted resource links, with your own saved progress."
+        detail="Published lessons, PDFs, and resource links, with your own saved progress."
       />
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <label>
@@ -153,6 +154,19 @@ export function LearningReader() {
       setBusy(false);
     }
   }
+  const [downloading, setDownloading] = useState(false);
+  async function download() {
+    if (!lesson?.pdf) return;
+    setDownloading(true);
+    setError("");
+    try {
+      await downloadLessonPdf(`/modules/${id}/lessons/${lesson.id}/pdf`, lesson.pdf.name);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to download the PDF.");
+    } finally {
+      setDownloading(false);
+    }
+  }
   async function complete() {
     if (!lesson) return;
     setBusy(true);
@@ -238,6 +252,11 @@ export function LearningReader() {
                     >
                       Open external resource ↗
                     </a>
+                  )}
+                  {lesson.pdf && (
+                    <button type="button" className="btn-secondary my-5" disabled={downloading} onClick={() => void download()}>
+                      {downloading ? "Downloading…" : `Download PDF: ${lesson.pdf.name}`}
+                    </button>
                   )}
                   <div className="mt-8 flex flex-wrap items-center gap-4">
                     <button
