@@ -105,7 +105,7 @@ All responses follow `{ success: true, data: ... }` or `{ success: false, error:
 | GET | `/auth/workspace/trainer` | Trainer role only; returns only the current profile |
 | GET | `/auth/workspace/admin` | Admin role only; returns only the current profile |
 
-There is no public staff-account creation API, user directory, or arbitrary user-ID profile endpoint. Public registration rejects extra fields including `role`. User responses whitelist safe fields and never serialize password hashes, session hashes, or demo flags. `requireAuth` and `requireRole` enforce permissions on the server. Future private endpoints must use these middleware and explicit ownership/batch checks.
+Public student registration rejects extra fields including `role`. The separate staff signup accepts only a valid one-time invitation for the exact work email and can create only a Trainer account. User responses whitelist safe fields and never serialize password hashes, session hashes, or demo flags. `requireAuth` and `requireRole` enforce permissions on the server.
 
 ## Development demo accounts
 
@@ -124,6 +124,16 @@ This creates:
 Use the private password you configured. No default password is committed or printed, and there is no automatic seed on startup. Rerunning preserves existing demo accounts and their passwords; it will not overwrite non-demo accounts. Use a dedicated development database. Production blocks demo seeding, demo login, and previously issued demo sessions even if demo users exist in the same database. Remove `SEED_DEMO_PASSWORD` from the private file after seeding if you do not need it again.
 
 ## Secure Trainer/Admin provisioning
+
+On the live site, an existing Admin can open **Workspace → Trainers & accounts**
+and create an invitation for a verified faculty work email. Share the code
+privately with that person. The recipient selects **Create a staff account** on
+the sign-in page, enters the invited email, name, branch or department, and sets
+their own password. Codes expire after 24 hours and are single use; issuing a
+new code replaces the previous one. New Trainer accounts have no batch
+assignments until an Admin adds them. Existing accounts are never overwritten.
+If no real Admin account exists yet, use the operator command below to create the
+first one. Development/demo Admin accounts cannot sign in to production.
 
 An authorized operator with backend/database access can add a real staff account. Set these values privately in `server/.env` (not in Git, public chat, or command-line arguments):
 

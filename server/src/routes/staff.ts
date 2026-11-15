@@ -28,6 +28,7 @@ import {
 import { listStudents, studentDetails } from "../controllers/staffStudents.js";
 import { listLiveClasses, getLiveClass, createLiveClass, updateLiveClass, cancelLiveClass, recordClassAttendance } from '../controllers/liveClasses.js';
 import { rateLimit } from 'express-rate-limit';
+import { issueStaffInvite } from '../controllers/staffSignup.js';
 export function staffRoutes(origin: string, status = databaseStatus) {
   const r = Router();
   r.use((_req, res, next) => {
@@ -101,6 +102,9 @@ export function staffRoutes(origin: string, status = databaseStatus) {
   r.get("/reports/export", reports.exportReport);
   r.get("/assessments/:id/results.csv", reports.exportAssessmentResults);
   r.get("/trainers", requireRole("admin"), trainers);
+  const inviteLimit = rateLimit({ windowMs: 60000, limit: 10, keyGenerator: req => req.user!.id as string,
+    message: { success: false, error: { code: 'RATE_LIMITED', message: 'Too many invitations. Please wait a minute.' } } });
+  r.post("/trainer-invites", requireRole("admin"), inviteLimit, issueStaffInvite);
   r.put(
     "/trainers/:trainerId/batches/:batchId",
     requireRole("admin"),
