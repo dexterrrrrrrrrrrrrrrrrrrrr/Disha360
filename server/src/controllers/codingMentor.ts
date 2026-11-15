@@ -6,9 +6,6 @@ import { AppError } from '../utils/AppError.js';
 export function codingMentorControllers(provider?: InterviewProvider) {
   const config: RequestHandler = async (_req, res) => { const status = provider?.availability ? await provider.availability() : undefined; res.json({ success: true, data: { configured: !!provider?.codingMentor && status?.available !== false, provider: provider?.name ?? null, streaming: !!provider?.codingMentorStream, model: status?.model, message: status?.message ?? (provider?.codingMentor ? 'Backend provider configured; live availability is not verified.' : 'Configure AI_PROVIDER=ollama, start ollama serve and select an installed OLLAMA_MODEL. See docs/LOCAL_DEVELOPMENT.md.') } }); };
   const context = async (req: Parameters<RequestHandler>[0]) => {
-    const { problemId, ...input } = mentorRequest.parse(req.body);
-  const config: RequestHandler = (_req, res) => res.json({ success: true, data: { configured: !!provider?.codingMentor, provider: provider?.codingMentor ? provider.name : null } });
-  const generate: RequestHandler = async (req, res) => {
     const { problemId, consentProvider, ...input } = mentorRequest.parse(req.body);
     let problem = null;
     if (problemId) {
@@ -19,6 +16,8 @@ export function codingMentorControllers(provider?: InterviewProvider) {
       problem = { title: p.title, statement: p.statement, inputFormat: p.inputFormat, outputFormat: p.outputFormat, constraints: p.constraints };
     }
     if (!provider?.codingMentor) throw new AppError(503, 'AI_SETUP_REQUIRED', 'The coding mentor requires a configured backend AI provider. Editing and deterministic judging are independent of AI.');
+    if ((provider.name === 'GroqCloud' || consentProvider) && consentProvider !== provider.name)
+      throw new AppError(409, 'AI_CONSENT_REQUIRED', 'Reload this page and review the current AI provider before sending code.');
     return { ...input, problem };
   };
   const generate: RequestHandler = async (req, res) => {
@@ -43,10 +42,6 @@ export function codingMentorControllers(provider?: InterviewProvider) {
       } catch { if (!controller.signal.aborted) res.write(JSON.stringify({ type: 'error', message: 'The AI response was interrupted or invalid. Partial guidance is incomplete and unverified; please retry.' }) + '\n'); }
       finally { await iterator.return?.(); res.end(); }
     } finally { controller.abort(); res.off('close', closed); }
-    if ((provider.name === 'GroqCloud' || consentProvider) && consentProvider !== provider.name)
-      throw new AppError(409, 'AI_CONSENT_REQUIRED', 'Reload this page and review the current AI provider before sending code.');
-    const advice = mentorResponseSchema.parse(await provider.codingMentor({ ...input, problem }));
-    res.json({ success: true, data: { ...advice, provider: provider.name, disclaimer: 'AI-generated advice. It was not executed or verified and does not determine submission pass/fail.' } });
   };
   return { config, generate, stream };
 }
