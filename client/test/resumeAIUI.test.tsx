@@ -1,6 +1,8 @@
 import { expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { ResumeAISuggestions } from '../src/features/resume/ResumeAISuggestions';
+const state = vi.hoisted(() => ({ available: true, provider: 'Google Gemini' }));
+vi.mock('../src/hooks/useStudentData', () => ({ useStudentData: () => ({ loading: false, data: { resumeSuggestionsAvailable: state.available, provider: state.provider } }) }));
 const state = vi.hoisted(() => ({ available: true }));
 vi.mock('../src/hooks/useStudentData', () => ({ useStudentData: () => ({ loading: false, data: { resumeSuggestionsAvailable: state.available, provider: 'GroqCloud' } }) }));
 it('shows privacy disclosure and requires opt-in before enabling suggestions', () => {
@@ -15,4 +17,11 @@ it('keeps the ATS workflow available when AI is not configured', () => {
   state.available = false;
   const html = renderToStaticMarkup(<ResumeAISuggestions resumeId="fixture" jobDescription={'x'.repeat(60)}/>);
   expect(html).toContain('ATS analysis and the resume builder remain available'); expect(html).not.toContain('Get optional AI suggestions</button>');
+});
+
+it('names the selected local provider in privacy and consent text', () => {
+  state.available = true; state.provider = 'Ollama';
+  const html = renderToStaticMarkup(<ResumeAISuggestions resumeId="fixture" jobDescription={'x'.repeat(60)}/>);
+  expect(html).toContain('sent to Ollama'); expect(html).not.toContain('Google Gemini');
+  state.provider = 'Google Gemini';
 });
