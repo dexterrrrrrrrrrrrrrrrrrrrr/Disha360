@@ -1,13 +1,20 @@
 import { AppError } from '../utils/AppError.js';
 import { GeminiAIService, type GeminiClientFactory } from './geminiAI.js';
 import { OpenAIInterviewProvider, type InterviewProvider } from './interviewProvider.js';
+import { GroqAI, groqModel } from './groqAI.js';
 
 export interface AISettings {
-  AI_PROVIDER: 'gemini' | 'openai'; GEMINI_API_KEY?: string; GEMINI_API_KEY_BACKUP?: string;
+  AI_PROVIDER: 'gemini' | 'openai' | 'groq'; GEMINI_API_KEY?: string; GEMINI_API_KEY_BACKUP?: string;
+  GROQ_API_KEY?: string; GROQ_MODEL?: string; GROQ_DAILY_REQUEST_LIMIT?: number;
   GEMINI_KEY_SELECTION: 'primary' | 'backup'; GEMINI_MODEL: string;
   OPENAI_API_KEY?: string; OPENAI_MODEL: string;
 }
 export function configureAI(settings: AISettings, createGeminiClient?: GeminiClientFactory): { provider?: InterviewProvider; setupMessage?: string } {
+  if (settings.AI_PROVIDER === 'groq') {
+    return settings.GROQ_API_KEY && settings.GROQ_MODEL === groqModel
+      ? { provider: new GroqAI(settings.GROQ_API_KEY, groqModel, settings.GROQ_DAILY_REQUEST_LIMIT ?? 25) }
+      : { setupMessage: 'GroqCloud setup required: configure a free-tier backend key and the supported model. No fallback provider is used.' };
+  }
   if (settings.AI_PROVIDER === 'openai') {
     return settings.OPENAI_API_KEY
       ? { provider: new OpenAIInterviewProvider(settings.OPENAI_API_KEY, settings.OPENAI_MODEL) }

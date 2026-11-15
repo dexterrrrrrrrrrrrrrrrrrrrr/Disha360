@@ -6,7 +6,7 @@ import { AppError } from '../utils/AppError.js';
 export function codingMentorControllers(provider?: InterviewProvider) {
   const config: RequestHandler = (_req, res) => res.json({ success: true, data: { configured: !!provider?.codingMentor, provider: provider?.codingMentor ? provider.name : null } });
   const generate: RequestHandler = async (req, res) => {
-    const { problemId, ...input } = mentorRequest.parse(req.body);
+    const { problemId, consentProvider, ...input } = mentorRequest.parse(req.body);
     let problem = null;
     if (problemId) {
       // Explicit public-field projection. Hidden tests never enter mentor prompts.
@@ -15,7 +15,9 @@ export function codingMentorControllers(provider?: InterviewProvider) {
       if (!p.supportedLanguages.includes(input.language)) throw new AppError(400, 'UNSUPPORTED_LANGUAGE', 'This problem does not support the selected language.');
       problem = { title: p.title, statement: p.statement, inputFormat: p.inputFormat, outputFormat: p.outputFormat, constraints: p.constraints };
     }
-    if (!provider?.codingMentor) throw new AppError(503, 'AI_SETUP_REQUIRED', 'The coding mentor requires the configured backend Gemini provider. Editing and deterministic judging are independent of AI.');
+    if (!provider?.codingMentor) throw new AppError(503, 'AI_SETUP_REQUIRED', 'The coding mentor requires a configured backend AI provider. Editing and deterministic judging are independent of AI.');
+    if ((provider.name === 'GroqCloud' || consentProvider) && consentProvider !== provider.name)
+      throw new AppError(409, 'AI_CONSENT_REQUIRED', 'Reload this page and review the current AI provider before sending code.');
     const advice = mentorResponseSchema.parse(await provider.codingMentor({ ...input, problem }));
     res.json({ success: true, data: { ...advice, provider: provider.name, disclaimer: 'AI-generated advice. It was not executed or verified and does not determine submission pass/fail.' } });
   };

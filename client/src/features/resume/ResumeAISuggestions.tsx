@@ -7,7 +7,8 @@ interface Suggestions {
   provider: string; resumeVersion: number; disclaimer: string;
 }
 export function ResumeAISuggestions({ resumeId, jobDescription }: { resumeId: string; jobDescription: string }) {
-  const config = useStudentData<{ resumeSuggestionsAvailable: boolean }>('/interviews/config');
+  const config = useStudentData<{ resumeSuggestionsAvailable: boolean; provider: string | null }>('/interviews/config');
+  const provider = config.data?.provider;
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -16,14 +17,14 @@ export function ResumeAISuggestions({ resumeId, jobDescription }: { resumeId: st
   useEffect(() => {
     generation.current++; setConsent(false); setResult(null); setError(''); setBusy(false);
     return () => { generation.current++; };
-  }, [resumeId, jobDescription]);
+  }, [resumeId, jobDescription, provider]);
   async function generate() {
     if (!consent || busy) return;
     const current = generation.current;
     setBusy(true); setError(''); setResult(null);
     try {
       const data = await studentRequest<Suggestions>(`/resumes/${resumeId}/ai-suggestions`, {
-        method: 'POST', body: { consent: true, jobDescription },
+        method: 'POST', body: { consent: true, jobDescription, ...(provider === 'GroqCloud' ? { consentProvider: provider } : {}) },
       });
       if (current === generation.current) setResult(data);
     } catch (e) {
@@ -33,12 +34,12 @@ export function ResumeAISuggestions({ resumeId, jobDescription }: { resumeId: st
   return <section aria-label="Optional AI resume suggestions" className="card space-y-4 break-words">
     <h2 className="font-semibold">Optional AI resume suggestions</h2>
     <p className="text-sm leading-6 text-slate-600">The ATS score above stays rule-based. AI suggestions do not change your score or resume. Review wording and add skills or achievements only if they are true.</p>
-    <p id="resume-ai-privacy" className="rounded-lg bg-amber-50 p-4 text-sm leading-6 text-amber-900">If you choose this action, selected saved resume text and the job description are sent to Google Gemini. Contact details, links, employers and institutions are omitted; known contact details in text are redacted. Free-form text may still identify you. Review Google's current data-use and retention terms, especially for the Free Tier, and avoid confidential or sensitive information.</p>
+    <p id="resume-ai-privacy" className="rounded-lg bg-amber-50 p-4 text-sm leading-6 text-amber-900">If you choose this action, selected saved resume text and the job description are sent to {provider || 'the configured AI provider'}. Contact details, links, employers and institutions are omitted; known contact details in text are redacted. Free-form text may still identify you. Review the provider’s current data-use and retention terms and avoid confidential or sensitive information.</p>
     {(error || config.error) && <ErrorNotice message={error || config.error} />}
-    {config.loading ? <p role="status" className="text-sm">Checking AI availability…</p> : !config.data?.resumeSuggestionsAvailable ? <p className="text-sm text-slate-600">AI suggestions are unavailable until the backend Gemini provider is configured. ATS analysis and the resume builder remain available.</p> : <>
+    {config.loading ? <p role="status" className="text-sm">Checking AI availability…</p> : !config.data?.resumeSuggestionsAvailable ? <p className="text-sm text-slate-600">AI suggestions are unavailable until an AI provider is configured. ATS analysis and the resume builder remain available.</p> : <>
       <label className="flex items-start gap-3 text-sm leading-6">
         <input type="checkbox" className="mt-1" checked={consent} disabled={busy} aria-describedby="resume-ai-privacy" onChange={e => setConsent(e.target.checked)} />
-        <span>I consent to sending this selected resume content and job description to Google Gemini for this request.</span>
+        <span>I consent to sending this selected resume content and job description to {provider || 'the configured AI provider'} for this request.</span>
       </label>
       <button className="btn-primary" disabled={busy || !consent || !resumeId || jobDescription.trim().length < 50} onClick={() => void generate()}>{busy ? 'Preparing AI suggestions…' : 'Get optional AI suggestions'}</button>
     </>}

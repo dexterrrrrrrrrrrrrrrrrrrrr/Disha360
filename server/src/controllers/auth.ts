@@ -25,10 +25,10 @@ export function register(secure: boolean, sameSite: CookieSameSite = 'lax'): Req
 export function login(secure: boolean, sameSite: CookieSameSite = 'lax'): RequestHandler {
   return async (req, res) => {
     const input = loginSchema.parse(req.body);
-    const user = await User.findOne({ email: input.email }).select('+passwordHash +isDemo');
+    const user = await User.findOne({ email: input.email }).select('+passwordHash +isDemo +authVersion');
     const valid = await verifyPassword(input.password, user?.passwordHash || await dummyHash);
     if (!user || !valid || (user.isDemo && !req.app.locals.allowDemoAccounts)) throw new AppError(401, 'INVALID_CREDENTIALS', 'Email or password is incorrect.');
-    await createSession(req, res, user.id as string, secure, sameSite);
+    await createSession(req, res, user.id as string, secure, sameSite, user.authVersion ?? 0);
     res.json({ success: true, data: { user: publicUser(user) } });
   };
 }
