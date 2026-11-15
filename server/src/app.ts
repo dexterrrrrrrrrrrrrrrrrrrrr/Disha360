@@ -11,7 +11,7 @@ import type { databaseStatus } from "./config/database.js";
 import { authRoutes } from "./routes/auth.js";
 import { studentRoutes } from "./routes/student.js";
 import type { InterviewProvider } from "./services/interviewProvider.js";
-import { requireAuth } from "./middleware/auth.js";
+import { requireAuth, requireRole } from "./middleware/auth.js";
 import { createHackathonFeed } from "./services/hackathons.js";
 
 export function createApp(options: {
@@ -63,7 +63,7 @@ export function createApp(options: {
     authRoutes({ ...options, secureCookies: options.secureCookies ?? false }),
   );
   const hackathonFeed = options.hackathonFeed ?? createHackathonFeed();
-  app.get("/api/v1/hackathons", requireAuth, async (_req, res) => {
+  app.get("/api/v1/hackathons", requireAuth, requireRole("student"), async (_req, res) => {
     res.set("Cache-Control", "no-store").json({ success: true, data: await hackathonFeed() });
   });
   app.use(

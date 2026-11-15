@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Empty, ErrorNotice, Loading, PageHeading } from '../components/StudentUI';
 import { useStaffData } from '../hooks/useStaffData';
 import { AppLayout } from '../layouts/AppLayout';
-import type { Role } from '../types';
 
 type Feed = { syncedAt: string; stale: boolean; events: {
   id: string; name: string; start: string; end: string; url: string | null; location: string;
@@ -10,7 +9,7 @@ type Feed = { syncedAt: string; stale: boolean; events: {
 }[] };
 const dateTime = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
-export function Hackathons({ role }: { role: Role }) {
+export function Hackathons() {
   const { data, loading, error, reload } = useStaffData<Feed>('/hackathons', '/api/v1');
   const [filter, setFilter] = useState('All');
   useEffect(() => {
@@ -20,7 +19,7 @@ export function Hackathons({ role }: { role: Role }) {
     return () => window.clearInterval(timer);
   }, [reload]);
   const events = data?.events.filter(event => filter === 'All' || event.status === filter || event.format === filter);
-  return <AppLayout role={role}>
+  return <AppLayout role="student">
     <PageHeading title="Hackathons" detail="Find events happening now or coming up. Check the organizer’s site for eligibility and registration." />
     <div className="card mb-5 flex flex-wrap items-end justify-between gap-4">
       <label><span className="field-label">Show events</span>
