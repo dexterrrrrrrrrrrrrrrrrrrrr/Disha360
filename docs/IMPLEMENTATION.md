@@ -874,7 +874,7 @@ Created files:
 - `server/test/geminiAI.test.ts`, `server/test/geminiWorkflows.test.ts`, `server/test/helpers/gemini.ts`
 - `client/src/features/resume/ResumeAISuggestions.tsx`, `client/test/resumeAIUI.test.tsx`
 
-## OneCompiler execution, Gemini Coding Mentor and SparkMeet classes
+## OneCompiler execution, Gemini Coding Mentor and Disha Meet classes
 
 This extension keeps the existing provider abstraction, coding drafts/problems/
 submissions, deterministic grading and reward consumers. `configureExecution`
@@ -961,7 +961,7 @@ After start, schedule/batch/trainer changes are rejected; notes/resources remain
 editable. Completed classes cannot be cancelled; cancelled classes cannot be edited.
 Creation retries have identical fingerprints or return conflict, not duplicate rows.
 
-SparkMeet integration stores actual operator-supplied links on the fixed origin and
+Disha Meet integration stores actual operator-supplied links on the fixed origin and
 opens a separate tab. No verified API/embed/token/SSO documentation was available;
 no such capability or automatic room creation/attendance is claimed. Additional
 mentorship is intentionally outside this core implementation. Resource links use
@@ -1024,7 +1024,7 @@ hints and quota messages, deterministic hidden batch grading and submission
 history passed. Representative layouts passed at 320, 375, 768 and 1440 pixels
 without overflow; there were no page errors or external browser requests. These
 checks do not verify live credentials, credits, external worker security or actual
-SparkMeet video rooms. No production records, private .env files, credentials,
+Disha Meet video rooms. No production records, private .env files, credentials,
 commits or pushes were changed/created by this implementation.
 
 ## Ollama and the learning studio

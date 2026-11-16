@@ -260,4 +260,4 @@ isolation (e.g. gVisor/microVM), authenticated private worker transport, quotas,
 queueing, lifecycle recovery, monitoring and adversarial security review. A public
 Express API must have no Docker socket. Production activation remains rejected.
 Render cannot access your Mac's Docker or Ollama loopback services. Existing
-OneCompiler and Gemini remain optional cloud choices, and SparkMeet is unchanged.
+OneCompiler and Gemini remain optional cloud choices, and Disha Meet is unchanged.

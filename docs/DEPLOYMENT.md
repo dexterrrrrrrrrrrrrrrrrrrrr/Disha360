@@ -55,8 +55,8 @@ All backend variables belong only in Render's private environment settings.
 | JUDGE0_URL / JUDGE0_API_KEY | Render | Optional, leave unset | Existing separately hardened Judge0 alternative only |
 | OPENAI_API_KEY / OPENAI_MODEL | Render | Optional, leave unset | Preserved explicitly selected alternative, not a paid fallback |
 
-SparkMeet needs no environment variable: meeting URLs are restricted to
-`https://sparkmeet-web.onrender.com`. `SEED_DEMO_PASSWORD`, `CODING_SEED_DATABASE`,
+Disha Meet needs no environment variable: links are restricted to the
+[approved meeting host](../server/src/validators/liveClass.ts). `SEED_DEMO_PASSWORD`, `CODING_SEED_DATABASE`,
 `COMPANY_SEED_DATABASE` and `PROVISION_DATABASE` are development/operator settings,
 not production service requirements. Temporary `PROVISION_NAME`,
 `PROVISION_EMAIL`, `PROVISION_ROLE`, `PROVISION_PASSWORD` are only for the
@@ -150,7 +150,7 @@ directly on the Render domain need one fresh sign-in on the frontend domain.
   for “Gemini 3.8 Flash”. Confirm model availability and current Free Tier terms
   in official Google docs/account before setting GEMINI_MODEL. Rate limits do
   not trigger key switching, paid fallbacks or endless retries.
-- SparkMeet opens operator-verified external meeting links in a new tab with
+- Disha Meet opens operator-verified external meeting links in a new tab with
   noopener/noreferrer. Batch authorization and manual attendance remain enforced;
   room security/APIs/embedding and actual video functionality are not verified here.
 - Local process limits are not durable monetary caps. Multiple processes/restarts
@@ -172,7 +172,7 @@ refresh/session persistence, logout/revocation for Student/Trainer/Admin; forbid
 role/private-data requests; rejected untrusted-origin mutations; browser cookies
 and preflight; SPA deep-link refresh; one explicitly budget-authorized execution
 and hidden-test submission/history/analytics; interviews and mentor failure states;
-valid SparkMeet joins and manual attendance. Do not make paid provider calls as
+valid Disha Meet joins and manual attendance. Do not make paid provider calls as
 an automated deployment smoke test. Hosted browser behavior and live credentials
 cannot be certified before deployment.
 
@@ -195,7 +195,7 @@ The read-only `npm run db:check` failed from this workspace. No connection strin
 or provider credential was changed and no database records were written. The
 safe error does not establish whether credentials, DNS/outbound access or Atlas
 network rules caused the failure. Verify Atlas connectivity from Render before
-declaring deployment ready. Live provider/model credentials and free quotas, actual SparkMeet rooms and the
+declaring deployment ready. Live provider/model credentials and free quotas, actual Disha Meet rooms and the
 reviewed merge into `main` remain manual launch checks.
 
 ### Files changed by this preparation
@@ -215,7 +215,7 @@ reviewed merge into `main` remain manual launch checks.
 Existing operator/seed tests now supply a valid production HTTPS origin so their
 original early-refusal assertions still execute under stricter validation. No
 package manifests, lockfiles, database connection implementation, execution or AI
-provider adapters, hidden-test architecture or SparkMeet class services changed.
+provider adapters, hidden-test architecture or Disha Meet class services changed.
 
 ## Render startup troubleshooting and current production URLs
 
@@ -306,7 +306,7 @@ documented input/output format. Verify history, genuine aggregate grading and
 analytics; wrong answers and provider failures must not count as solved. Java
 public class filenames are inferred conventionally. Hidden inputs and expected
 answers must never appear in browser responses or mentor prompts. Confirm mentor
-advice remains labeled unexecuted and SparkMeet attendance remains manual.
+advice remains labeled unexecuted and Disha Meet attendance remains manual.
 
 Automated authenticated Run and batch Submit coverage now includes all four
 languages with mocked provider transports, including hidden-test/history/analytics

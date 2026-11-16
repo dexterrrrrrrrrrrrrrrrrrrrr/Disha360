@@ -19,11 +19,15 @@ it('keeps mentor configuration errors separate from execution availability', () 
 });
 it('shows clear live-class empty states and staff scheduling navigation', () => {
   state.detail = false;
-  expect(render(<LiveClasses role="student"/>)).toContain('Only assigned batches appear');
+  const student = render(<LiveClasses role="student"/>);
+  expect(student).toContain('Disha Meet live classes');
+  expect(student).toContain('Only assigned batches appear');
   expect(render(<LiveClasses role="trainer"/>)).toContain('Schedule Live Class');
 });
 it('opens meeting links securely and never treats joining as attendance; notes remain escaped', () => {
   state.detail = true; const html = render(<LiveClassDetails role="student"/>);
+  expect(html).toContain('Join Disha Meet');
+  expect(html).toContain('href="https://sparkmeet-web.onrender.com/"');
   expect(html).toContain('rel="noopener noreferrer"'); expect(html).toContain('referrerPolicy="no-referrer"');
   expect(html).toContain('Opening a link never marks attendance'); expect(html).toContain('Not recorded'); expect(html).not.toContain('<script>');
 });

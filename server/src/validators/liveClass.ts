@@ -1,9 +1,10 @@
 import { z } from 'zod';
 import { objectIdSchema } from './resume.js';
-export const sparkMeetOrigin = 'https://sparkmeet-web.onrender.com';
+// Keep the original service address so already scheduled rooms still work.
+export const dishaMeetOrigin = 'https://sparkmeet-web.onrender.com';
 export const meetingUrl = z.string().trim().max(2000).url().refine(value => {
-  try { const u = new URL(value); return u.origin === sparkMeetOrigin && !u.username && !u.password && !/[\\\u0000-\u0020\u007f]/.test(value) && !/%(?:0[0-9a-f]|1[0-9a-f]|7f)/i.test(value); } catch { return false; }
-}, 'Use an HTTPS meeting link from the approved SparkMeet origin.');
+  try { const u = new URL(value); return u.origin === dishaMeetOrigin && !u.username && !u.password && !/[\\\u0000-\u0020\u007f]/.test(value) && !/%(?:0[0-9a-f]|1[0-9a-f]|7f)/i.test(value); } catch { return false; }
+}, 'Use an HTTPS meeting link from the approved Disha Meet origin.');
 const resourceUrl = z.string().trim().max(2000).url().refine(value => {
   try { const u = new URL(value); return u.protocol === 'https:' && !u.username && !u.password && !/[\\\u0000-\u0020\u007f]/.test(value); } catch { return false; }
 }, 'Resources must use HTTPS links without embedded credentials.');
