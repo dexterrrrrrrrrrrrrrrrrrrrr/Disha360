@@ -41,7 +41,7 @@ All backend variables belong only in Render's private environment settings.
 | MONGODB_URI | Render | Required, secret | Atlas SRV URI, explicit production database and least-privilege database user |
 | CLIENT_ORIGIN | Render | Required | Exact HTTPS Vercel/custom frontend origin, no path/query/userinfo |
 | TRUST_PROXY | Render | Required configuration | `true` only with a verified single trusted ingress hop |
-| COOKIE_SAME_SITE | Render | Required configuration | `none` for cross-site vercel.app → onrender.com; `lax` for same-site custom domains |
+| COOKIE_SAME_SITE | Render | Optional | `lax` is recommended after the same-origin proxy is live. Existing `none` is compatible with the proxy. |
 | CODING_DEMO_MODE | Render | Keep disabled | `false`; production additionally forces it off |
 | ONECOMPILER_ENABLED | Render | Required for real execution | `true` only after validating account credits, billing and provider safety; otherwise `false` |
 | ONECOMPILER_API_KEY | Render | Secret, required when enabled | Direct OneCompiler credential; never frontend |
@@ -54,7 +54,6 @@ All backend variables belong only in Render's private environment settings.
 | JUDGE0_SECURITY_CONFIRMED | Render | Keep disabled | `false`; OneCompiler does not bypass Judge0's gate |
 | JUDGE0_URL / JUDGE0_API_KEY | Render | Optional, leave unset | Existing separately hardened Judge0 alternative only |
 | OPENAI_API_KEY / OPENAI_MODEL | Render | Optional, leave unset | Preserved explicitly selected alternative, not a paid fallback |
-| VITE_API_BASE_URL | Vercel | Required for direct API topology | Public HTTPS Render API **origin**, no `/api` suffix, credentials, path or query |
 
 SparkMeet needs no environment variable: meeting URLs are restricted to
 `https://sparkmeet-web.onrender.com`. `SEED_DEMO_PASSWORD`, `CODING_SEED_DATABASE`,
@@ -112,14 +111,12 @@ through secure backend/cloud environment settings, not chat or frontend forms.
    and root package.json are required by the install command.
 2. Override install to `cd .. && npm ci --include=dev`, build to `npm run build`,
    output to `dist`. No backend or API key is hosted in the static frontend.
-3. Set VITE_API_BASE_URL to the public Render HTTPS origin. Set no OneCompiler,
-   Gemini, MongoDB, provisioning or session secrets in Vercel. Build-time changes
-   require a fresh frontend build; they cannot be changed by a browser user.
-4. `client/vercel.json` rewrites SPA routes to index.html. Vercel serves existing
-   assets normally; refresh `/dashboard/student`, `/coding` and actual detail
-   URLs to verify routing. API requests go directly to Render via the configured
-   origin. Without it, relative API paths are intended only for the local Vite
-   proxy and would be incorrectly handled by a production SPA fallback.
+3. Vercel needs no runtime secrets. The frontend ignores the retired
+   `VITE_API_BASE_URL` setting. If present, it can be removed in Vercel.
+4. `client/vercel.json` forwards `/api/*` to the existing Render backend before
+   the SPA fallback. The browser stays on the Vercel origin. Check that
+   `/api/v1/ready` returns JSON, and refresh a dashboard, coding page and module
+   detail page to verify that client routes still work.
 5. Use the final frontend origin in Render CLIENT_ORIGIN. Preview URLs are not
    automatically authorized; use a separate non-production backend/database for
    previews instead of widening production CORS.
@@ -134,14 +131,13 @@ HttpOnly, Secure in production, path `/api`; deletion uses the same attributes.
 SameSite=None is rejected without secure production cookies. Production requires
 an exact HTTPS CLIENT_ORIGIN; local defaults remain suitable for development.
 
-**Cross-site cookies are a launch constraint.** SameSite=None permits cross-site
-requests but does not override browser third-party-cookie blocking. Direct
-`*.vercel.app` to `*.onrender.com` login must be tested in target browsers, including
-privacy modes. For reliable cookie authentication, prefer HTTPS custom domains
-under one registrable domain (e.g. app.example.org and api.example.org), set
-COOKIE_SAME_SITE=lax, and retain exact CORS/CSRF checks. If domains are unavailable,
-review a same-origin `/api` reverse-proxy deployment separately. Do not weaken
-CSRF, expose session tokens to JavaScript or promise universal default-domain login.
+**Safari sign-in uses a first-party cookie.** Session requests now use
+`/api` on the same origin as the page. Vercel forwards them to Render without
+redirecting the browser. Keep `CLIENT_ORIGIN` set to the exact public frontend
+origin and preserve the existing CSRF checks and HttpOnly cookie. After
+deploying, sign in on iPhone Safari with normal privacy settings enabled and
+confirm the session survives a dashboard refresh. Existing sessions established
+directly on the Render domain need one fresh sign-in on the frontend domain.
 
 ## Integration and budget checks
 
@@ -191,18 +187,15 @@ failures. `npm run typecheck` and `npm run build` also passed. The existing
 Monaco bundle-size advisory remains. Existing OneCompiler, Gemini workflows, coding demo/security gates,
 hidden tests, analytics and class authorization tests remain included. Production
 authentication tests use the actual session models and disposable MongoDB, not
-live accounts. Hosted cross-site browser cookie acceptance is still unverified.
+live accounts. This historical run did not verify hosted browser sessions.
 The complete test/type-check/build sequence was also rerun successfully on
-Node **22.23.3**, matching the recommended Render runtime. A separate frontend
-production build with a placeholder HTTPS VITE_API_BASE_URL passed and contained
-that configured public origin in its output; no provider credentials were used.
+Node **22.23.3**, matching the recommended Render runtime. The earlier direct API build has since been replaced by same-origin routing.
 
 The read-only `npm run db:check` failed from this workspace. No connection string
 or provider credential was changed and no database records were written. The
 safe error does not establish whether credentials, DNS/outbound access or Atlas
 network rules caused the failure. Verify Atlas connectivity from Render before
-declaring deployment ready. Current default-domain third-party cookie support,
-live provider/model credentials and free quotas, actual SparkMeet rooms and the
+declaring deployment ready. Live provider/model credentials and free quotas, actual SparkMeet rooms and the
 reviewed merge into `main` remain manual launch checks.
 
 ### Files changed by this preparation
@@ -251,7 +244,7 @@ settings, save, and restart/redeploy the service:
 NODE_ENV=production
 NODE_VERSION=22.23.3
 CLIENT_ORIGIN=https://disha360-cypher.vercel.app
-COOKIE_SAME_SITE=none
+COOKIE_SAME_SITE=lax
 CODING_DEMO_MODE=false
 JUDGE0_SECURITY_CONFIRMED=false
 ONECOMPILER_ENABLED=true
@@ -268,12 +261,9 @@ GEMINI_API_KEY_BACKUP remains manual-only. TRUST_PROXY=true is appropriate only
 after validating the single trusted ingress hop described above. Leave Render's
 PORT managed by the platform. The daily attempt cap is not a monetary guarantee.
 
-In Vercel, open **Project → Settings → Environment Variables**, set
-`VITE_API_BASE_URL=https://disha360-api.onrender.com` for **Production**, and rebuild
-the frontend. Do not append `/api` or a path. Keep Root Directory `client`, Vite,
-build `npm run build`, output `dist`, and install
-`cd .. && npm ci --include=dev`. Do not change production origin settings to a
-preview URL. Cross-site cookie limitations described above remain applicable.
+Keep Root Directory `client`, Vite, build `npm run build`, output `dist`, and
+install `cd .. && npm ci --include=dev`. Redeploy the frontend so its `/api`
+rewrite is active. Do not change production origin settings to a preview URL.
 
 Render settings remain repository root, build
 `npm ci --include=dev && npm run build -w server`, start
