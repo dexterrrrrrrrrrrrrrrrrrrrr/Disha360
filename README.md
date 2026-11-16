@@ -1,6 +1,6 @@
 # Disha360 Placement Training LMS
 
-A placement training LMS built with React, Vite, TypeScript, Tailwind, Express, and MongoDB. The completed placement-training workflows are preserved. AI interviews support a centralized Google Gemini integration and the optional existing OpenAI provider; live AI verification still requires a properly configured backend. The student dashboard reads actual MongoDB records and shows empty states when performance evidence is absent. The existing design system and project structure are preserved.
+A placement training LMS built with React, Vite, TypeScript, Tailwind, Express, and MongoDB. The completed placement-training workflows are preserved. AI interviews support a centralized Google Gemini integration and the optional existing OpenAI provider; live AI verification still requires a properly configured backend. The student dashboard reads actual MongoDB records and shows empty states when performance evidence is absent. The client uses a shared midnight and lime theme with a self-hosted Space Grotesk font.
 
 ## Install and run
 

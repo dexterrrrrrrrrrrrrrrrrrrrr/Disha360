@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import { UpcomingLiveClasses } from './LiveClasses';
 import { AppLayout } from "../layouts/AppLayout";
+import { WorkspaceHero } from "../components/PlacementOrbit";
 import {
-  PageHeading,
   Empty,
   Skeleton,
   ErrorNotice,
@@ -41,9 +41,9 @@ export function StaffDashboard({ role }: { role: "trainer" | "admin" }) {
   const d = result.data;
   return (
     <AppLayout role={role}>
-      <PageHeading
+      <WorkspaceHero eyebrow={role === "admin" ? "ADMIN WORKSPACE" : "TRAINER WORKSPACE"}
         title={role === "admin" ? "Admin overview" : "Trainer overview"}
-        detail="Actual institution records and authorized student preparation activity."
+        detail="See your training activity, learning completion, and upcoming live classes in one place."
       />
       {result.error && (
         <ErrorNotice
@@ -76,7 +76,7 @@ export function StaffDashboard({ role }: { role: "trainer" | "admin" }) {
                     ["Assigned assessments", d.metrics.assignedAssessments],
                   ]
               ).map(([label, value]) => (
-                <section key={String(label)} className="card">
+                <section key={String(label)} className="card metric-card">
                   <h2 className="text-sm text-slate-500">{label}</h2>
                   <p className="mt-3 text-3xl font-bold text-ink">
                     {value ?? "—"}

@@ -1,18 +1,26 @@
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('./assets/space-grotesk.woff2') format('woff2');
+  font-weight: 300 700;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  body { @apply m-0 font-sans text-ink antialiased; }
-  button, a, input, select, textarea, summary, [tabindex] { @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2; }
+  html { color-scheme: dark; }
+  body { @apply m-0 bg-canvas font-sans text-ink antialiased; }
+  button, a, input, select, textarea, summary, [tabindex] { @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action focus-visible:ring-offset-2 focus-visible:ring-offset-canvas; }
   button:disabled { @apply cursor-not-allowed; }
-  ::selection { @apply bg-indigo-100 text-indigo-900; }
+  ::selection { @apply bg-action text-on-action; }
 }
 @layer components {
-  .card { @apply min-w-0 rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm; }
-  .btn-primary { @apply rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50; }
-  .btn-secondary { @apply rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50; }
-  .input { @apply w-full rounded-lg border border-slate-200 bg-white px-3.5 py-3 text-sm text-ink placeholder:text-slate-400; }
+  .card { @apply min-w-0 rounded-2xl border border-line bg-panel p-5 shadow-sm; }
+  .btn-primary { @apply rounded-lg bg-action px-4 py-3 text-sm font-bold text-on-action hover:bg-action-hover disabled:opacity-50; }
+  .btn-secondary { @apply rounded-lg border border-line bg-panel px-4 py-3 text-sm font-semibold text-ink hover:border-brand hover:bg-raised disabled:opacity-50; }
+  .input { @apply w-full rounded-lg border border-line bg-canvas px-3.5 py-3 text-sm text-ink placeholder:text-slate-400; }
   .field-label { @apply mb-2 block text-xs font-semibold text-slate-600; }
   .status { @apply rounded-md px-2 py-1 text-[10px] font-semibold; }
   .icon-button { @apply inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg p-2 text-slate-500 hover:bg-slate-100; }
@@ -35,8 +43,7 @@
 @layer components {
   .input { min-height: 2.75rem; }
   #main-content .grid > *, #main-content .flex > * { min-width: 0; }
-  #main-content .text-slate-400, #main-content .text-slate-500, #workspace-navigation .text-slate-400, footer.text-slate-400 { color: #475569; }
-  .input::placeholder { color: #64748b; opacity: 1; }
+  .input::placeholder { color: #a1acca; opacity: 1; }
   .overflow-x-auto { max-width: 100%; overscroll-behavior-x: contain; }
   .overflow-x-auto table { min-width: 32rem; }
 }
@@ -53,6 +60,74 @@
 }
 
 .interview-progress { appearance: none; border: 0; border-radius: 999px; overflow: hidden; }
-.interview-progress::-webkit-progress-bar { background: #ede9fe; border-radius: 999px; }
-.interview-progress::-webkit-progress-value { background: #7c3aed; border-radius: 999px; }
-.interview-progress::-moz-progress-bar { background: #7c3aed; border-radius: 999px; }
+.interview-progress::-webkit-progress-bar { background: #2a334b; border-radius: 999px; }
+.interview-progress::-webkit-progress-value { background: #bec2ff; border-radius: 999px; }
+.interview-progress::-moz-progress-bar { background: #bec2ff; border-radius: 999px; }
+
+@layer components {
+  .brand-chip { @apply grid h-10 w-10 shrink-0 place-items-center bg-action text-on-action; border-radius: 11px 11px 3px 11px; }
+  .signal-kicker { @apply items-center gap-2.5 text-[10px] font-bold uppercase tracking-[.16em] text-brand; display: inline-flex; }
+  .signal-kicker i, .orbit-label i { @apply h-1.5 w-1.5 shrink-0 rounded-full bg-action; box-shadow: 0 0 10px #d8fc9177; }
+  .auth-shell { @apply mx-auto flex min-h-screen max-w-[1350px] flex-col px-4 sm:px-8 lg:px-10; }
+  .auth-top { @apply flex min-h-[74px] items-center justify-between gap-4 border-b border-line; }
+  .auth-top > .signal-kicker { @apply hidden sm:inline-flex; }
+  .auth-grid { @apply grid flex-1 items-center gap-9 py-8 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] md:gap-10 lg:gap-16 lg:py-12; }
+  .auth-story h2 { margin: .7rem 0; font-size: clamp(2rem, 4.8vw, 4.55rem); line-height: 1.02; letter-spacing: -.072em; font-weight: 700; }
+  .auth-story h2 span { @apply text-brand; }
+  .auth-description { @apply mb-5 max-w-[44ch] text-sm leading-6 text-slate-500 sm:text-base; }
+  .auth-pathways { @apply mt-4 flex flex-wrap gap-2 text-xs text-slate-600; }
+  .auth-pathways li { @apply inline-flex items-center gap-2 rounded-md border border-line bg-panel px-2.5 py-2; }
+  .auth-pathways svg { @apply text-brand; }
+  .auth-main { @apply w-full min-w-0 md:order-last; }
+  .auth-card { @apply mx-auto w-full max-w-lg rounded-2xl border border-line bg-panel p-5 shadow-xl sm:p-8; }
+  .auth-card h1 { @apply text-3xl font-bold tracking-[-.055em] sm:text-4xl; }
+  .auth-footer { @apply flex flex-wrap justify-between gap-3 border-t border-line py-5 text-xs text-slate-400; }
+
+  .placement-orbit { position: relative; min-width: 0; aspect-ratio: 1.62; overflow: hidden; isolation: isolate; border: 1px solid #525e84; border-radius: 14px; background: radial-gradient(ellipse at 50% 47%, #363e73, #222947 52%, #151a2d 96%); }
+  .placement-orbit::before { content: ''; position: absolute; inset: 0; z-index: -1; background-image: linear-gradient(#a4aefe22 1px, transparent 1px), linear-gradient(90deg,#a4aefe22 1px, transparent 1px); background-size: 23px 23px; mask-image: radial-gradient(ellipse, #000, #0004 96%); }
+  .orbit-label { @apply absolute left-[4%] right-[4%] z-10 flex items-center justify-between gap-2 font-bold text-brand; font-size: clamp(.48rem, .8vw, .64rem); letter-spacing: .12em; }
+  .orbit-label span { @apply flex items-center gap-1.5; }
+  .orbit-label-top { top: 6%; }
+  .orbit-label-bottom { bottom: 6%; }
+  .orbit-diagram, .orbit-wires { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .orbit-wires { stroke: #9ba7fd68; }
+  .orbit-wires ellipse:first-of-type, .orbit-axis { stroke-dasharray: 4 6; }
+  .orbit-trace { stroke: #b8c2ff; stroke-width: 1.65; }
+  .orbit-wires circle { stroke: #eaffbf; fill: #d8fc91; }
+  .orbit-core { position: absolute; display: grid; place-items: center; top: 50%; left: 50%; width: 19%; aspect-ratio: 1; transform: translate(-50%, -50%) rotate(45deg); border-radius: 23%; border: 1px solid #e0e5ff; background: linear-gradient(135deg,#d6daff,#858df3); color: #202b50; box-shadow: 0 0 0 8px #a1abfe24, 0 0 40px #a4adff80; animation: orbit-glow 4s ease-in-out infinite alternate; }
+  .orbit-core svg { width: 51%; height: 51%; transform: rotate(-45deg); }
+  .orbit-node { @apply absolute inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-[#6b78a5] bg-[#182039] px-1.5 py-1 font-bold text-ink sm:px-2; font-size: clamp(.49rem, .81vw, .7rem); letter-spacing: .08em; }
+  .orbit-node svg { @apply text-action; }
+  .orbit-learn { top: 19%; left: 11%; }
+  .orbit-code { top: 30%; right: 8%; }
+  .orbit-interview { bottom: 15%; right: 14%; }
+
+  .workspace-sidebar { background-image: linear-gradient(155deg,#1b233b 0%,#151a2d 38%); }
+  .workspace-role { @apply rounded-lg border border-line bg-canvas px-3 py-2; }
+  .workspace-nav-group { @apply mt-4; }
+  .workspace-nav-group > p { @apply px-2.5 pb-1 text-[10px] font-bold uppercase tracking-[.15em] text-slate-400; }
+  .workspace-link { @apply my-0.5 flex min-h-11 items-center gap-2.5 rounded-lg border border-transparent px-2.5 py-2 text-sm font-semibold text-slate-500; }
+  .workspace-link:hover { @apply bg-raised text-ink; }
+  .workspace-link.is-active { @apply border-indigo-200 bg-indigo-50 text-brand; }
+  .workspace-link.is-active svg { @apply text-action; }
+  .workspace-topbar { background-color: #141a2b; }
+  .workspace-shell { background-image: radial-gradient(ellipse at 75% 0,#232b4c80 0%,transparent 450px); }
+  .workspace-hero { @apply grid items-center gap-6 rounded-2xl border border-line bg-panel p-5 sm:p-7 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]; background-image: linear-gradient(120deg,#1c243d,#151a2d 60%); }
+  .workspace-hero h1 { margin: .6rem 0; font-size: clamp(2rem, 4vw, 3.75rem); font-weight: 700; line-height: 1; letter-spacing: -.06em; }
+  .hero-detail { @apply max-w-[56ch] text-sm leading-6 text-slate-500 sm:text-base; }
+  .workspace-hero .placement-orbit { @apply hidden xl:block; max-height: 240px; }
+  .metric-card { @apply relative overflow-hidden; }
+  .metric-card::after { content: ''; position: absolute; right: 0; bottom: 0; width: 46px; height: 18px; border: 1px solid #424c72; border-right: 0; border-bottom: 0; border-radius: 10px 0 0 0; pointer-events: none; }
+  .metric-icon { @apply ml-2 grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-indigo-200 bg-indigo-50 text-brand; }
+}
+@keyframes orbit-glow {
+  to { box-shadow: 0 0 0 11px #a1abfe18, 0 0 51px #a4adffb0; }
+}
+@media (max-width: 767px) {
+  .auth-story { border-top: 1px solid #39435f; padding-top: 22px; }
+  .auth-story .placement-orbit { display: none; }
+}
+@media (forced-colors: active) {
+  :focus-visible { outline: 2px solid Highlight !important; outline-offset: 3px; }
+}
+.resume-paper { color: #17233b; color-scheme: light; }

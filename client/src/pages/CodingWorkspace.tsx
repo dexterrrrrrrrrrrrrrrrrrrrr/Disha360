@@ -332,7 +332,7 @@ export function Workspace({
             <>
               <p role="status" className="mt-3 text-sm font-semibold text-amber-900">Demo Mode: Code was not executed. This is an illustrative output only.</p>
               <p className="mt-2 text-sm text-slate-600">Code and custom input are not processed. This fixed example is unrelated to your solution.</p>
-              {demoRun ? <pre className="mt-3 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-slate-700 bg-slate-950 p-4 font-mono text-xs leading-6 text-slate-100">{demoRun.illustrativeOutput}</pre> : <p className="mt-3 text-sm text-slate-600">Choose Demo Run to show a fixed illustrative example.</p>}
+              {demoRun ? <pre className="mt-3 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-slate-700 bg-slate-950 p-4 font-mono text-xs leading-6 text-ink">{demoRun.illustrativeOutput}</pre> : <p className="mt-3 text-sm text-slate-600">Choose Demo Run to show a fixed illustrative example.</p>}
             </>
           ) : execution ? (
             <>
@@ -356,7 +356,7 @@ export function Workspace({
               ].map(([label, text]) => (
                 <div className="mt-4" key={label}>
                   <h3 className="text-xs font-semibold">{label}</h3>
-                  <pre className="mt-2 max-h-52 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-slate-700 bg-slate-950 p-4 font-mono text-xs leading-6 text-slate-100">
+                  <pre className="mt-2 max-h-52 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-slate-700 bg-slate-950 p-4 font-mono text-xs leading-6 text-ink">
                     {text || "(empty)"}
                   </pre>
                 </div>
@@ -375,7 +375,7 @@ export function Workspace({
           )}
         </section>
       </div>
-      <details open className="rounded-2xl border border-violet-200 bg-white"><summary className="cursor-pointer px-5 py-4 text-sm font-semibold text-brand">AI Coding Mentor · hints & debugging</summary>
+      <details open className="rounded-2xl border border-violet-200 bg-panel"><summary className="cursor-pointer px-5 py-4 text-sm font-semibold text-brand">AI Coding Mentor · hints & debugging</summary>
       <CodingMentor language={language} source={source} problemId={problemId} disabled={!!busy || loading || loadFailed}
         executionError={demoMode ? '' : execution ? ['Run status: ' + execution.verdict, 'Run stdout: ' + execution.stdout, 'Run stderr: ' + execution.stderr, 'Diagnostics: ' + execution.compileOutput, execution.exception || '', submissionSummary ? `Submission aggregate: ${submissionSummary.verdict}; ${submissionSummary.passed}/${submissionSummary.total} passed. Hidden test details are unavailable.` : ''].join('\n') : submissionSummary ? `Submission aggregate: ${submissionSummary.verdict}; ${submissionSummary.passed}/${submissionSummary.total} passed. Hidden test details are unavailable.` : ''}/>
       </details>

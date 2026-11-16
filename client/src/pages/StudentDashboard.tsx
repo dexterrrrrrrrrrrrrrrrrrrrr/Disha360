@@ -2,15 +2,15 @@ import { DashboardEngagement } from "../components/EngagementSummary";
 import { UpcomingLiveClasses } from './LiveClasses';
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { BookOpen, Flame, Target, ClipboardCheck } from "lucide-react";
+import { ArrowUpRight, BookOpen, Code2, Flame, Target, ClipboardCheck } from "lucide-react";
 import { AppLayout } from "../layouts/AppLayout";
+import { WorkspaceHero } from "../components/PlacementOrbit";
 import { useStudentData } from "../hooks/useStudentData";
 import { studentRequest } from "../services/student";
 import {
   Empty,
   ErrorNotice,
   Loading,
-  PageHeading,
 } from "../components/StudentUI";
 
 interface Summary {
@@ -60,7 +60,7 @@ export function StudentDashboard() {
   const data = summary.data;
   return (
     <AppLayout role="student">
-      <PageHeading
+      <WorkspaceHero eyebrow="STUDENT WORKSPACE"
         title={
           data
             ? `Welcome back, ${data.student.name.split(" ")[0]}`
@@ -68,10 +68,13 @@ export function StudentDashboard() {
         }
         detail={
           data
-            ? `${data.student.department} · Semester ${data.student.semester} · Every record reflects your own preparation.`
+            ? `${data.student.department} · Semester ${data.student.semester} · Pick up where you left off or try a new challenge.`
             : "Your progress, priorities, and next steps in one place."
         }
-      />
+      >
+        <Link className="btn-primary inline-flex items-center gap-2" to="/learning">Learning modules <ArrowUpRight size={16}/></Link>
+        <Link className="btn-secondary inline-flex items-center gap-2" to="/coding"><Code2 size={16}/> Coding practice</Link>
+      </WorkspaceHero>
       {checkInError && <ErrorNotice message={checkInError} />}{" "}
       {summary.error && (
         <ErrorNotice
@@ -117,10 +120,10 @@ export function StudentDashboard() {
                   note: "UTC calendar · visits and saved activity",
                 },
               ].map(({ label, value, Icon, note }) => (
-                <section key={label} className="card">
+                <section key={label} className="card metric-card">
                   <div className="flex items-center justify-between text-sm text-slate-500">
                     {label}
-                    <Icon size={19} className="text-brand" />
+                    <span className="metric-icon"><Icon size={18} /></span>
                   </div>
                   <p className="my-4 text-3xl font-bold">{value}</p>
                   <p className="text-xs text-slate-400">{note}</p>
@@ -179,7 +182,7 @@ export function StudentDashboard() {
                 <section className="card">
                   <h2 className="mb-4 font-semibold">Upcoming assessments</h2>
                   {!data.assessments.upcoming.length ? (
-                    <Empty message="No pending assessments are assigned. This page does not invent deadlines or scores." />
+                    <Empty message="No assessments are due right now. New assignments will appear here." />
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-sm">
