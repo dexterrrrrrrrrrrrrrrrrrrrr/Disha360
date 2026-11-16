@@ -710,7 +710,7 @@ Final browser matrix: **55 role-specific route views at 320, 375, 768, 1024 and
 or unexpected runtime/console errors after corrected findings and targeted reruns.
 The full route/finding checklist is in `docs/UI_AUDIT.md`.
 
-## OneCompiler, Coding Mentor and SparkMeet live classes
+## OneCompiler, Coding Mentor and Disha Meet live classes
 
 The existing editor, drafts, challenge/submission models, deterministic judging,
 progress, badges and analytics remain in use. Judge0 is preserved behind
@@ -757,7 +757,7 @@ limit. Set a lower limit for your allowance. It is not a durable monetary budget
 7. For classes, use existing Admin batch management to assign a Trainer and enroll
    Students. A Trainer opens **Live classes → Schedule Live Class**, chooses their
    batch, title, description, local start date/time, duration and a meeting link
-   independently obtained from SparkMeet. Admins can also assign batch trainers.
+   independently obtained from Disha Meet. Admins can also assign batch trainers.
    Save, edit notes/resources, launch or cancel from class details. Students see
    their enrolled batches on Overview and Live classes, open details, and join in
    a new tab. Attendance history is visible in the class list/details.
@@ -814,7 +814,7 @@ input allowances and pricing were supplied by the user from the
 access here returned proxy HTTP 403. Credit consumption is not assumed to be one
 credit per call/test. Verify account-specific terms and limits before live use.
 
-### Coding Mentor and SparkMeet safeguards
+### Coding Mentor and Disha Meet safeguards
 
 The mentor offers code/error explanations, debug/optimization advice, complexity
 analysis, solution approaches and three progressive hint levels. Full solutions
@@ -825,18 +825,18 @@ rendered as text and does not create scores, submissions or rewards. It shares
 the existing Gemini timeout, schema validation, ten-per-minute/two-concurrent
 limits, plus five requests/minute per Student and an 1,800-output-token cap.
 
-SparkMeet URLs are restricted to the exact HTTPS origin
-`https://sparkmeet-web.onrender.com`; credential-bearing URLs, lookalike domains,
+Disha Meet URLs are restricted to the [approved HTTPS meeting host](server/src/validators/liveClass.ts);
+credential-bearing URLs, lookalike domains,
 other protocols/ports and control characters are rejected. Links open in a new
-tab with `noopener noreferrer` and no referrer. No extra SparkMeet environment
+tab with `noopener noreferrer` and no referrer. No extra Disha Meet environment
 settings are needed. The app and integration documentation were inaccessible
 (proxy HTTP 403), so embedding, meeting-creation APIs, deep-link parameters,
 SSO/tokens and in-room access controls remain **unverified**. Disha360 neither
-generates room URLs nor claims to secure participation inside SparkMeet. Trainers
-must verify actual room links and SparkMeet access controls themselves. No WebRTC
+generates room URLs nor claims to secure participation inside Disha Meet. Trainers
+must verify actual room links and Disha Meet access controls themselves. No WebRTC
 system, guessed API, fake attendance or optional mentorship workflow was added.
 Live/Completed describes the stored schedule, not detected video activity.
-Cancelling an LMS class hides its link; it does not terminate a SparkMeet room.
+Cancelling an LMS class hides its link; it does not terminate a Disha Meet room.
 Saved manual attendance remains visible to authorized staff and counts in totals,
 including records from cancelled classes or previously enrolled Students.
 

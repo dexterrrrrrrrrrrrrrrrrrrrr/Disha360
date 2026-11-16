@@ -144,7 +144,7 @@ see DOCKER_SANDBOX.md for the current results and production restrictions. Exist
 Render cannot access your Mac's `127.0.0.1`. A public Disha360 deployment still
 requires reachable MongoDB, a separately provisioned trusted AI inference server
 or optional authorized cloud API, and a verified execution service for real
-judging. SparkMeet stays on its existing external deployment. No paid resources
+judging. Disha Meet stays on its existing external deployment. No paid resources
 or cloud credentials are required just to run local Ollama AI.
 
 Official API contract consulted:

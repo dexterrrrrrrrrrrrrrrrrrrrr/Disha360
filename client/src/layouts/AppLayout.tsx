@@ -34,7 +34,7 @@ export function AppLayout({
   const auth = useAuth();
   const location = useLocation();
   const destinations: Record<string, string> = {
-    'Live classes': role === 'student' ? '/live-classes' : `/manage/${role}/live-classes`,
+    'Disha Meet': role === 'student' ? '/live-classes' : `/manage/${role}/live-classes`,
     Hackathons: "/workspace/hackathons",
     Leaderboard:
       role === "student" ? "/leaderboard" : `/manage/${role}/leaderboard`,
@@ -76,7 +76,7 @@ export function AppLayout({
     }
   }
   const student = [
-    ['Live classes', Users],
+    ['Disha Meet', Users],
     ['Hackathons', Trophy],
     ["Learning modules", BookOpen],
     ["Assessments", FileText],
@@ -90,7 +90,7 @@ export function AppLayout({
     ["Achievements", Trophy],
   ] as const;
   const staff = [
-    ['Live classes', Users],
+    ['Disha Meet', Users],
     ["Batches & students", Users],
     ["Student directory", Users],
     ["Learning content", BookOpen],
@@ -225,8 +225,8 @@ export function AppLayout({
               <span className="font-medium text-ink">
                 {location.pathname === "/workspace/hackathons"
                   ? "Hackathons"
-                  : location.pathname.startsWith('/live-classes')
-                  ? 'Live classes'
+                  : (location.pathname.startsWith('/live-classes') || /^\/manage\/(admin|trainer)\/live-classes(?:\/|$)/.test(location.pathname))
+                  ? 'Disha Meet'
                   : location.pathname.startsWith("/leaderboard")
                   ? "Leaderboard"
                   : location.pathname === "/achievements"
