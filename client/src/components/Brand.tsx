@@ -1,4 +1,11 @@
-import { Layers } from 'lucide-react';
-export function Brand({ dark = false }: { dark?: boolean }) {
-  return <div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand text-white"><Layers size={22}/></span><div><div className={`text-lg font-bold tracking-tight ${dark ? 'text-white' : 'text-ink'}`}>Disha360</div><div className={`text-[10px] font-semibold uppercase tracking-[.12em] ${dark ? 'text-slate-400' : 'text-slate-500'}`}>Placement training</div></div></div>;
+import { Orbit } from 'lucide-react';
+
+export function Brand() {
+  return <div className="flex items-center gap-3">
+    <span className="brand-chip" aria-hidden="true"><Orbit size={23} strokeWidth={2.2}/></span>
+    <div>
+      <div className="text-xl font-bold tracking-tight text-ink">Disha<span className="text-brand">360</span></div>
+      <div className="text-[10px] font-semibold uppercase tracking-[.15em] text-slate-400">Placement training</div>
+    </div>
+  </div>;
 }

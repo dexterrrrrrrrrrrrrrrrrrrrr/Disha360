@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Trophy,
   Users,
+  Video,
   X,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -56,7 +57,7 @@ export function AppLayout({
     "Performance analytics": "/analytics",
   };
   const navClass = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold ${isActive ? "bg-indigo-50 text-brand" : "text-slate-600 hover:bg-slate-50"}`;
+    `workspace-link ${isActive ? "is-active" : ""}`;
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
   async function logout() {
@@ -76,37 +77,34 @@ export function AppLayout({
     }
   }
   const student = [
-    ['Disha Meet', Users],
-    ['Hackathons', Trophy],
-    ["Learning modules", BookOpen],
-    ["Assessments", FileText],
-    ["Performance analytics", BarChart3],
-    ["Coding practice", Code2],
-    ["Resume studio", BriefcaseBusiness],
-    ["ATS analyzer", FileText],
-    ["Mock interviews", MessageSquare],
-    ["Company preparation", Users],
-    ["Leaderboard", Trophy],
-    ["Achievements", Trophy],
+    { title: "Learn & practise", links: [
+      ["Learning modules", BookOpen], ["Coding practice", Code2],
+      ["Assessments", FileText], ["Disha Meet", Video],
+    ] },
+    { title: "Career toolkit", links: [
+      ["Mock interviews", MessageSquare], ["Resume studio", BriefcaseBusiness],
+      ["ATS analyzer", FileText], ["Company preparation", Users], ["Hackathons", Trophy],
+    ] },
+    { title: "Track progress", links: [
+      ["Performance analytics", BarChart3], ["Leaderboard", Trophy], ["Achievements", Trophy],
+    ] },
   ] as const;
   const staff = [
-    ['Disha Meet', Users],
-    ["Batches & students", Users],
-    ["Student directory", Users],
-    ["Learning content", BookOpen],
-    ["Questions & tests", FileText],
-    ["Assignments", BriefcaseBusiness],
-    ["Reports & analytics", BarChart3],
-    ["Leaderboard", Trophy],
-    ...(role === "admin"
-      ? [["Trainers & accounts", ShieldCheck] as const]
-      : []),
+    { title: "Manage training", links: [
+      ["Batches & students", Users], ["Student directory", Users],
+      ["Learning content", BookOpen], ["Questions & tests", FileText],
+      ["Assignments", BriefcaseBusiness], ["Disha Meet", Video],
+    ] },
+    { title: "Track progress", links: [
+      ["Reports & analytics", BarChart3], ["Leaderboard", Trophy],
+      ...(role === "admin" ? [["Trainers & accounts", ShieldCheck] as const] : []),
+    ] },
   ] as const;
   return (
-    <div className="min-h-screen bg-[#f5f7fb]">
+    <div className="workspace-shell min-h-screen bg-canvas">
       {open && (
         <button
-          className="fixed inset-0 z-30 bg-ink/40 lg:hidden"
+          className="fixed inset-0 z-30 bg-black/65 lg:hidden"
           aria-label="Close navigation"
           tabIndex={-1}
           aria-hidden="true"
@@ -120,9 +118,9 @@ export function AppLayout({
         role={mobile && open ? "dialog" : undefined}
         aria-modal={mobile && open ? true : undefined}
         aria-label="Workspace navigation"
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-200 bg-white transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
+        className={`workspace-sidebar fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-line bg-panel transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <div className="flex h-24 items-center justify-between px-7">
+        <div className="flex min-h-20 shrink-0 items-center justify-between px-5">
           <Link to={`/dashboard/${role}`} aria-label="Disha360 home">
             <Brand />
           </Link>
@@ -134,65 +132,26 @@ export function AppLayout({
             <X size={20} />
           </button>
         </div>
-        <div className="mx-5 rounded-lg border border-indigo-100 bg-indigo-50/60 px-3 py-3">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-brand">
+        <div className="workspace-role mx-4 mb-2 shrink-0">
+          <span className="signal-kicker"><i />
             Your workspace
           </span>
           <p className="mt-1 truncate text-sm font-semibold text-ink">
             {roleLabels[role]}
           </p>
         </div>
-        <nav
-          aria-label="Main navigation"
-          className="mt-7 min-h-0 flex-1 overflow-y-auto space-y-1 px-4"
-        >
-          <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[.15em] text-slate-400">
-            Workspace
-          </p>
-          <NavLink
-            to={`/dashboard/${role}`}
-            className={navClass}
-            onClick={() => setOpen(false)}
-          >
-            <LayoutDashboard size={18} />
-            Overview
+        <nav aria-label="Main navigation" className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
+          <NavLink to={`/dashboard/${role}`} className={navClass} onClick={() => setOpen(false)}>
+            <LayoutDashboard size={17} /> Overview
           </NavLink>
-          {(role === "student" ? student : staff).map(([label, Icon]) =>
-            destinations[label] ? (
-              <NavLink
-                key={label}
-                to={destinations[label]}
-                className={navClass}
-                onClick={() => setOpen(false)}
-              >
-                <Icon size={18} />
-                {label}
-              </NavLink>
-            ) : (
-              <button
-                key={label}
-                disabled
-                title="Planned for a later checkpoint"
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm text-slate-400"
-              >
-                <Icon size={18} />
-                {label}
-              </button>
-            ),
-          )}
+          {(role === "student" ? student : staff).map(({ title, links }) => <div key={title} className="workspace-nav-group">
+            <p>{title}</p>
+            {links.map(([label, Icon]) => <NavLink key={label} to={destinations[label]} className={navClass} onClick={() => setOpen(false)}>
+              <Icon size={17} /> {label}
+            </NavLink>)}
+          </div>)}
         </nav>
-        <div className="m-5 rounded-xl bg-slate-50 p-4">
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-            <ShieldCheck size={16} />
-            Authenticated workspace
-          </div>
-          <p className="mt-2 text-xs leading-5 text-slate-500">
-            {role === "student"
-              ? "Your preparation records are private to your account."
-              : "Student records are limited to your authorized staff scope."}
-          </p>
-        </div>
-        <div className="border-t border-slate-100">
+        <div className="shrink-0 border-t border-line">
           {logoutError && (
             <p role="alert" className="px-5 pt-3 text-xs text-red-700">
               {logoutError}
@@ -201,7 +160,7 @@ export function AppLayout({
           <button
             onClick={() => void logout()}
             disabled={loggingOut}
-            className="flex w-full items-center gap-3 px-7 py-5 text-sm font-medium text-slate-600"
+            className="flex w-full items-center gap-3 px-5 py-4 text-sm font-semibold text-slate-500 hover:bg-raised hover:text-ink"
           >
             <LogOut size={17} />
             {loggingOut ? "Signing out…" : "Sign out"}
@@ -209,7 +168,7 @@ export function AppLayout({
         </div>
       </aside>
       <div className="min-w-0 lg:pl-64" inert={mobile && open}>
-        <header className="flex min-h-20 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 sm:px-8">
+        <header className="workspace-topbar flex min-h-20 items-center justify-between gap-3 border-b border-line px-4 sm:px-8">
           <div className="flex min-w-0 items-center gap-3">
             <button
               className="icon-button lg:hidden"

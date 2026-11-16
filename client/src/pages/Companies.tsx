@@ -347,7 +347,7 @@ function CompanyPlan({ id }: { id: string }) {
                   {company.checklist.map((item) => (
                     <label
                       key={item.key}
-                      className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-100 p-3 text-sm leading-6 text-slate-700"
+                      className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-100 p-3 text-sm leading-6 text-slate-600"
                     >
                       <input
                         className="mt-1 h-4 w-4 shrink-0 accent-indigo-600"

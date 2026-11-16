@@ -11,13 +11,15 @@ self.MonacoEnvironment = {
 };
 loader.config({ monaco });
 monaco.editor.defineTheme("disha-accessible", {
-  base: "hc-light",
+  base: "hc-black",
   inherit: true,
   rules: [],
   colors: {
-    "editorLineNumber.foreground": "#475569",
-    "editorLineNumber.activeForeground": "#17233b",
-    "editorLineNumber.dimmedForeground": "#475569",
+    "editor.background": "#101424",
+    "editor.foreground": "#f4f5ff",
+    "editorLineNumber.foreground": "#aeb8d2",
+    "editorLineNumber.activeForeground": "#d8fc91",
+    "editorLineNumber.dimmedForeground": "#aeb8d2",
   },
 });
 export default function CodeEditor({
