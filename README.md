@@ -825,13 +825,15 @@ rendered as text and does not create scores, submissions or rewards. It shares
 the existing Gemini timeout, schema validation, ten-per-minute/two-concurrent
 limits, plus five requests/minute per Student and an 1,800-output-token cap.
 
-Disha Meet URLs are restricted to the [approved HTTPS meeting host](server/src/validators/liveClass.ts);
+Create rooms at [Disha Meet](https://disha-meet.vercel.app/) and paste the room
+link when scheduling. To keep an older class, edit it and paste a new room link;
+links to the previous provider are not shown to students. Disha Meet URLs are
+restricted to this approved HTTPS origin;
 credential-bearing URLs, lookalike domains,
 other protocols/ports and control characters are rejected. Links open in a new
 tab with `noopener noreferrer` and no referrer. No extra Disha Meet environment
-settings are needed. The app and integration documentation were inaccessible
-(proxy HTTP 403), so embedding, meeting-creation APIs, deep-link parameters,
-SSO/tokens and in-room access controls remain **unverified**. Disha360 neither
+settings are needed. Embedding, meeting-creation APIs, SSO/tokens and in-room
+access controls remain **unverified**. Disha360 neither
 generates room URLs nor claims to secure participation inside Disha Meet. Trainers
 must verify actual room links and Disha Meet access controls themselves. No WebRTC
 system, guessed API, fake attendance or optional mentorship workflow was added.

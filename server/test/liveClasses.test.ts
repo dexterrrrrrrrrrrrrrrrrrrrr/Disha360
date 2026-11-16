@@ -14,7 +14,7 @@ async function setup() {
   const batch = await Batch.create({ name: 'Placement batch', trainerIds: [trainer.user._id, colleague.user._id] });
   await Enrollment.create({ batchId: batch._id, studentId: student.user._id });
   const app = createApp({ clientOrigin: 'http://localhost:5173', databaseConfigured: true });
-  const body = { title: 'Algorithms live class', description: 'Review sorting concepts.', batchId: batch.id, startsAt: new Date(Date.now() + 3600000).toISOString(), durationMinutes: 60, meetingUrl: 'https://sparkmeet-web.onrender.com/', notes: 'Read the shared notes.', resources: [{ title: 'Reference', url: 'https://example.org/resource' }], requestId: randomUUID() };
+  const body = { title: 'Algorithms live class', description: 'Review sorting concepts.', batchId: batch.id, startsAt: new Date(Date.now() + 3600000).toISOString(), durationMinutes: 60, meetingUrl: 'https://disha-meet.vercel.app/', notes: 'Read the shared notes.', resources: [{ title: 'Reference', url: 'https://example.org/resource' }], requestId: randomUUID() };
   const staff = (cookie: string, method: 'get' | 'post' | 'put', path: string, body?: object) => {
     const r = request(app)[method]('/api/v1/staff'+path).set('Cookie', cookie).set('Origin', 'http://localhost:5173').set('X-Disha360-Request', '1'); return body ? r.send(body) : r;
   };
@@ -31,7 +31,7 @@ it('schedules actual MongoDB classes and prevents duplicate or conflicting sched
 it('restricts students to active enrollment and exposes private meeting details only after authorization', async () => {
   const { app, student, other, staff, trainer, batch, create } = await setup(), c = await create();
   const list = await studentCall(app, student.cookie, 'get', '/live-classes'); expect(list.body.data.classes).toHaveLength(1); expect(JSON.stringify(list.body)).not.toContain('meetingUrl');
-  expect((await studentCall(app, student.cookie, 'get', `/live-classes/${c.id}`)).body.data.meetingUrl).toBe('https://sparkmeet-web.onrender.com/');
+  expect((await studentCall(app, student.cookie, 'get', `/live-classes/${c.id}`)).body.data.meetingUrl).toBe('https://disha-meet.vercel.app/');
   expect((await studentCall(app, other.cookie, 'get', '/live-classes')).body.data.classes).toEqual([]);
   expect((await studentCall(app, other.cookie, 'get', `/live-classes/${c.id}`)).status).toBe(404);
   await Enrollment.updateOne({ batchId: batch._id, studentId: student.user._id }, { $set: { active: false } });
@@ -92,10 +92,27 @@ it('preserves past class notes but rejects rescheduling/reassignment or cancella
   expect((await staff(trainer.cookie, 'put', `/live-classes/${c.id}`, { ...fields, version: 2 })).status).toBe(409);
   expect((await staff(trainer.cookie, 'post', `/live-classes/${c.id}/cancel`, { version: 2 })).status).toBe(409);
 });
-it.each(['https://sparkmeet-web.onrender.com.evil.example/room', 'https://sparkmeet-web.onrender.com@evil.example/room', 'http://sparkmeet-web.onrender.com/room', 'https://user:password@sparkmeet-web.onrender.com/room', 'javascript:alert(1)', 'https://sparkmeet-web.onrender.com:444/room', 'https://sparkmeet-web.onrender.com/%0aevil'])('rejects unsafe meeting URL %s', url => {
+it.each(['https://disha-meet.vercel.app.evil.example/room', 'https://disha-meet.vercel.app@evil.example/room', 'http://disha-meet.vercel.app/room', 'https://user:password@disha-meet.vercel.app/room', 'javascript:alert(1)', 'https://disha-meet.vercel.app:444/room', 'https://disha-meet.vercel.app/%0aevil'])('rejects unsafe meeting URL %s', url => {
   expect(meetingUrl.safeParse(url).success).toBe(false);
 });
 it('uses scheduled status windows without claiming actual meeting activity', () => {
   const c = { startsAt: new Date(1000), durationMinutes: 10, cancelled: false };
   expect(classStatus(c, 999)).toBe('Upcoming'); expect(classStatus(c, 1000)).toBe('Live'); expect(classStatus(c, 601000)).toBe('Completed'); expect(classStatus({ ...c, cancelled: true }, 999)).toBe('Cancelled');
+});
+
+it('requires a new Disha Meet link for old rooms without changing the existing class record', async () => {
+  const { app, staff, trainer, student, body, create } = await setup(), c = await create();
+  const oldRoom = 'https://sparkmeet-web.onrender.com/room/old-room';
+  const path = `/live-classes/${c.id}`;
+  await LiveClass.updateOne({ _id: c.id }, { $set: { meetingUrl: oldRoom } });
+  expect((await studentCall(app, student.cookie, 'get', path)).body.data)
+    .toMatchObject({ meetingUrl: null, meetingLinkNeedsUpdate: true, version: 1 });
+  expect((await staff(trainer.cookie, 'get', path)).body.data.meetingLinkNeedsUpdate).toBe(true);
+  expect((await LiveClass.findById(c.id).select('+meetingUrl'))?.meetingUrl).toBe(oldRoom);
+  const { requestId: _, ...fields } = body;
+  expect((await staff(trainer.cookie, 'put', path, { ...fields, version: 1, meetingUrl: oldRoom })).status).toBe(400);
+  const room = 'https://disha-meet.vercel.app/room/new-room';
+  expect((await staff(trainer.cookie, 'put', path, { ...fields, version: 1, meetingUrl: room })).status).toBe(200);
+  expect((await studentCall(app, student.cookie, 'get', path)).body.data)
+    .toMatchObject({ meetingUrl: room, meetingLinkNeedsUpdate: false, version: 2 });
 });
