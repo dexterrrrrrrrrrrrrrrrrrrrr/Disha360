@@ -5,7 +5,7 @@ import { Batch, Enrollment } from '../models/Batch.js';
 import { User } from '../models/User.js';
 import { LiveClass } from '../models/LiveClass.js';
 import { objectIdSchema } from '../validators/resume.js';
-import { createClassInput, updateClassInput, attendanceInput, versionInput } from '../validators/liveClass.js';
+import { meetingUrl, createClassInput, updateClassInput, attendanceInput, versionInput } from '../validators/liveClass.js';
 import { authorizedBatch } from './staffBatches.js';
 import { visibleUsers } from '../services/staffScope.js';
 import { AppError } from '../utils/AppError.js';
@@ -31,10 +31,11 @@ async function owned(req: Request) {
 function dto(c: ClassDocument, req: Request, details = false) {
   const student = req.user!.role === 'student';
   const status = classStatus(c);
+  const canJoin = details && status !== 'Cancelled' && meetingUrl.safeParse(c.meetingUrl).success;
   return { id: c.id, title: c.title, description: c.description, batchId: c.batchId.toString(), trainerId: c.trainerId.toString(),
     startsAt: c.startsAt, durationMinutes: c.durationMinutes, status, version: c.version,
-    // Cancelled links are never returned. Only authorized detail requests disclose links.
-    ...(details ? { meetingUrl: status === 'Cancelled' ? null : c.meetingUrl, notes: c.notes, resources: c.resources.map(r => ({ title: r.title, url: r.url })) } : {}),
+    // Retain old records, but only disclose links on the current meeting service.
+    ...(details ? { meetingUrl: canJoin ? c.meetingUrl : null, meetingLinkNeedsUpdate: !canJoin && (status === 'Upcoming' || status === 'Live'), notes: c.notes, resources: c.resources.map(r => ({ title: r.title, url: r.url })) } : {}),
     ...(student ? { attendance: c.attendance.filter(a => a.studentId.equals(req.user!._id)).map(a => ({ status: a.status, note: a.note, recordedAt: a.recordedAt })) }
       : details ? { attendance: c.attendance.map(a => ({ studentId: a.studentId.toString(), status: a.status, note: a.note, recordedAt: a.recordedAt })) } : {}),
   };

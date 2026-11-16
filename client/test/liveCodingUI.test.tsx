@@ -5,7 +5,7 @@ import { CodingMentor } from '../src/features/coding/CodingMentor';
 import { LiveClasses, LiveClassDetails } from '../src/pages/LiveClasses';
 const state = vi.hoisted(() => ({ mentor: true, detail: false }));
 vi.mock('../src/hooks/useStudentData', () => ({ useStudentData: () => ({ data: { configured: state.mentor }, loading: false }) }));
-vi.mock('../src/hooks/useStaffData', () => ({ useStaffData: () => ({ loading: false, data: state.detail ? { id: 'fixture', title: 'Private meeting', startsAt: '2026-10-11T10:00:00Z', durationMinutes: 60, status: 'Upcoming', version: 1, meetingUrl: 'https://sparkmeet-web.onrender.com/', notes: '<script>alert(1)</script>', attendance: [] } : { classes: [], truncated: false } }) }));
+vi.mock('../src/hooks/useStaffData', () => ({ useStaffData: () => ({ loading: false, data: state.detail ? { id: 'fixture', title: 'Private meeting', startsAt: '2026-10-11T10:00:00Z', durationMinutes: 60, status: 'Upcoming', version: 1, meetingUrl: 'https://disha-meet.vercel.app/', notes: '<script>alert(1)</script>', attendance: [] } : { classes: [], truncated: false } }) }));
 vi.mock('../src/layouts/AppLayout', () => ({ AppLayout: ({ children }: { children: React.ReactNode }) => <main>{children}</main> }));
 const render = (element: React.ReactNode) => renderToStaticMarkup(<MemoryRouter>{element}</MemoryRouter>);
 it('discloses mentor data sharing, starts with consent and full-solution opt-ins unchecked, and disables calls', () => {
@@ -27,7 +27,7 @@ it('shows clear live-class empty states and staff scheduling navigation', () => 
 it('opens meeting links securely and never treats joining as attendance; notes remain escaped', () => {
   state.detail = true; const html = render(<LiveClassDetails role="student"/>);
   expect(html).toContain('Join Disha Meet');
-  expect(html).toContain('href="https://sparkmeet-web.onrender.com/"');
+  expect(html).toContain('href="https://disha-meet.vercel.app/"');
   expect(html).toContain('rel="noopener noreferrer"'); expect(html).toContain('referrerPolicy="no-referrer"');
   expect(html).toContain('Opening a link never marks attendance'); expect(html).toContain('Not recorded'); expect(html).not.toContain('<script>');
 });
